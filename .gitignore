@@ -13,7 +13,8 @@ Release/
 *.hex
 *.bin
 *.lst
-*.xml
+*_linkInfo.xml
+*.dep
 
 # Generated SysConfig output
 ti_msp_dl_config.c
@@ -26,8 +27,13 @@ Event.dot
 # IDE and local tooling state
 .settings/
 .clangd/
+.clangd-cache/
+.metadata/
 .vscode/
 *.launch
+*.ccsworkspace
+*.uvguix*
+*.uvoptx
 *.log
 *.tmp
 
@@ -41,4 +47,3 @@ test-results/
 # Local documentation rendering output
 docx_review/
 rendered/
-
