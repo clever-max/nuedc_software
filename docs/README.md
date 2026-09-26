@@ -4,6 +4,7 @@ Use this directory for information that must remain understandable outside the s
 
 ## Planned documents
 
+- `ALGORITHM_AND_LEARNING_GUIDE.md`: beginner-friendly algorithm, architecture, control, testing, and AI collaboration guide
 - `hardware_interface.md`: frozen pin map, voltage levels, connectors, and peripheral ownership
 - `power_and_safety.md`: battery, regulators, motor protection, emergency stop, and laser safety
 - `mechanical_constraints.md`: chassis dimensions, wheel geometry, sensor mounting, and parking clearances
@@ -13,4 +14,3 @@ Use this directory for information that must remain understandable outside the s
 
 Do not store temporary screenshots, raw build logs, or unreviewed data here. Put large test data in a
 separate artifact location and record its identifier and purpose in the relevant test document.
-
