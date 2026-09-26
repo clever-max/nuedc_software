@@ -3,7 +3,6 @@
 存放电赛各类代码。当前目录是第一个示例工程 `empty`，用于验证 MSPM0G3507 + CCS Theia 的工程管理和开发流程。
 
 ## Example Summary
-## Example Summary
 
 Empty project using DriverLib.
 This example shows a basic empty project using DriverLib with just main file

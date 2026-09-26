@@ -35,5 +35,4 @@ MSPM0 baseline: SysConfig initialization and onboard LED1 control.
 - [ ] UART parameter and telemetry protocol
 - [ ] Closed-loop motion control
 
-The macro-level development plan is in `DEVELOPMENT_PLAN.md`.
-
+The macro-level development plan is in `DEVELOPMENT_PLAN.md` in this directory.
