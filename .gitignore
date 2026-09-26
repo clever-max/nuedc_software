@@ -47,3 +47,10 @@ test-results/
 # Local documentation rendering output
 docx_review/
 rendered/
+
+# Local vendor reference cache; keep the human-maintained index tracked
+docs/reference/LP-MSPM0G3507/source_page.html
+docs/reference/LP-MSPM0G3507/*.pdf
+docs/reference/LP-MSPM0G3507/*.zip
+docs/reference/LP-MSPM0G3507/hardware/
+docs/reference/LP-MSPM0G3507/text/

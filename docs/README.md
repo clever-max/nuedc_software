@@ -7,6 +7,7 @@ Use this directory for information that must remain understandable outside the s
 - `ALGORITHM_AND_LEARNING_GUIDE.md`: beginner-friendly algorithm, architecture, control, testing, and AI collaboration guide
 - `DEVELOPMENT_PLAN.md`: team organization, milestones, repository workflow, and project completion criteria
 - `PROJECT_README.md`: current example project role, toolchain, and status
+- `reference/LP-MSPM0G3507/INDEX.md`: local offline reference cache for the LaunchPad board
 
 ## Planned documents
 

@@ -16,5 +16,6 @@ Use the skill's bundled scripts with absolute paths when needed. In particular:
 - Do not hand-edit generated files: `ti_msp_dl_config.c`, `ti_msp_dl_config.h`, `device_linker.cmd`, `device.opt`, `Debug/`, object files, maps, or `.out` files.
 - Preserve the existing MSPM0G3507, CCS Theia, TI Arm Clang, XDS110, SDK 2.11.0.07, and SysConfig metadata unless the user explicitly requests a migration.
 - The active project entrypoint is `empty.c`; the target configuration is `targetConfigs/MSPM0G3507.ccxml`.
+- For LP-MSPM0G3507 board questions, consult the local reference index at `docs/reference/LP-MSPM0G3507/INDEX.md` and its extracted user-guide text before browsing TI again.
 
 After changes, report separately whether source checks, SysConfig generation, compilation, linking, and physical-board validation succeeded. Do not claim hardware validation without a connected board.
