@@ -1,0 +1,56 @@
+# CCS / SysConfig generated build output
+Debug/
+Release/
+*.out
+*.map
+*.obj
+*.o
+*.d
+*.crf
+*.lnp
+*.axf
+*.elf
+*.hex
+*.bin
+*.lst
+*_linkInfo.xml
+*.dep
+
+# Generated SysConfig output
+ti_msp_dl_config.c
+ti_msp_dl_config.h
+device_linker.cmd
+device.opt
+device.cmd.genlibs
+Event.dot
+
+# IDE and local tooling state
+.settings/
+.clangd/
+.clangd-cache/
+.metadata/
+.vscode/
+*.launch
+*.ccsworkspace
+*.uvguix*
+*.uvoptx
+*.log
+*.tmp
+
+# Python and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+coverage/
+test-results/
+
+# Local documentation rendering output
+docx_review/
+rendered/
+
+# Local vendor reference cache; keep the human-maintained index tracked
+docs/reference/LP-MSPM0G3507/source_page.html
+docs/reference/LP-MSPM0G3507/*.pdf
+docs/reference/LP-MSPM0G3507/*.zip
+docs/reference/LP-MSPM0G3507/hardware/
+docs/reference/LP-MSPM0G3507/text/

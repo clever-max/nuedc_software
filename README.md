@@ -1,45 +1,25 @@
-# nuedc_software
+# MSPM0 CCS Workspace
 
-存放电赛各类代码。当前目录是第一个示例工程 `empty`，用于验证 MSPM0G3507 + CCS Theia 的工程管理和开发流程。
+这是天猛星 MSPM0G3507 的 CCS Theia 工作区。每个工程独立放在根目录下，公共开发规范和脚本集中在 `skills/`，板卡与 Wiki 资料集中在 `docs/`。
 
-## Example Summary
+## 目录
 
-Empty project using DriverLib.
-This example shows a basic empty project using DriverLib with just main file
-and SysConfig initialization.
+| 目录 | 用途 |
+|---|---|
+| `empty/` | MSPM0G3507 GPIO/按键起始工程 |
+| `photoresistor_uart/` | LM393 光敏传感器 ADC、UART 和 Python 监视器 |
+| `skills/mspm0-ccs/` | 共享 MSPM0 CCS skill、验证脚本、参考和示例 |
+| `docs/` | 天猛星 Wiki 摘要、板卡参考和学习资料 |
 
-## Peripherals & Pin Assignments
+## 开发入口
 
-| Peripheral | Pin | Function |
-| --- | --- | --- |
-| SYSCTL |  |  |
-| DEBUGSS | PA20 | Debug Clock |
-| DEBUGSS | PA19 | Debug Data In Out |
+从本目录启动 Codex/CCS 相关工作时，先读取根目录的 `AGENTS.md`，再读取目标项目自己的 `AGENTS.md` 和 `skills/mspm0-ccs/SKILL.md`。
 
-## BoosterPacks, Board Resources & Jumper Settings
+项目的 SysConfig 文件是配置源。修改后使用共享脚本检查：
 
-Visit [LP_MSPM0G3507](https://www.ti.com/tool/LP-MSPM0G3507) for LaunchPad information, including user guide and hardware files.
+```powershell
+python skills/mspm0-ccs/scripts/check_syscfg.py .\photoresistor_uart
+python skills/mspm0-ccs/scripts/run_sysconfig.py .\photoresistor_uart --compiler ticlang
+```
 
-| Pin | Peripheral | Function | LaunchPad Pin | LaunchPad Settings |
-| --- | --- | --- | --- | --- |
-| PA20 | DEBUGSS | SWCLK | N/A | <ul><li>PA20 is used by SWD during debugging<br><ul><li>`J101 15:16 ON` Connect to XDS-110 SWCLK while debugging<br><li>`J101 15:16 OFF` Disconnect from XDS-110 SWCLK if using pin in application</ul></ul> |
-| PA19 | DEBUGSS | SWDIO | N/A | <ul><li>PA19 is used by SWD during debugging<br><ul><li>`J101 13:14 ON` Connect to XDS-110 SWDIO while debugging<br><li>`J101 13:14 OFF` Disconnect from XDS-110 SWDIO if using pin in application</ul></ul> |
-
-### Device Migration Recommendations
-This project was developed for a superset device included in the LP_MSPM0G3507 LaunchPad. Please
-visit the [CCS User's Guide](https://software-dl.ti.com/msp430/esd/MSPM0-SDK/latest/docs/english/tools/ccs_ide_guide/doc_guide/doc_guide-srcs/ccs_ide_guide.html#sysconfig-project-migration)
-for information about migrating to other MSPM0 devices.
-
-### Low-Power Recommendations
-TI recommends to terminate unused pins by setting the corresponding functions to
-GPIO and configure the pins to output low or input with internal
-pullup/pulldown resistor.
-
-SysConfig allows developers to easily configure unused pins by selecting **Board**→**Configure Unused Pins**.
-
-For more information about jumper configuration to achieve low-power using the
-MSPM0 LaunchPad, please visit the [LP-MSPM0G3507 User's Guide](https://www.ti.com/lit/slau873).
-
-## Example Usage
-
-Compile, load and run the example.
+构建、下载和物理验证必须分别报告；没有连接板卡时不要声称硬件验证成功。

@@ -4,7 +4,8 @@
  */
 //@cliArgs --device "MSPM0G350X" --package "LQFP-64(PM)" --part "Default"
 //@v2CliArgs --device "MSPM0G3507" --package "LQFP-64(PM)"
-// @cliArgs --board /ti/boards/LP_MSPM0G3507 --rtos nortos
+// Target hardware: LCKFB Tianmengxing MSPM0G3507 (64-pin)
+// @cliArgs --rtos nortos
 
 /**
  * Import the modules used in this configuration.
@@ -12,6 +13,7 @@
 const SYSCTL = scripting.addModule("/ti/driverlib/SYSCTL");
 const GPIO = scripting.addModule("/ti/driverlib/GPIO", {}, false);
 const GPIO1 = GPIO.addInstance();
+const GPIO2 = GPIO.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
@@ -19,8 +21,14 @@ const GPIO1 = GPIO.addInstance();
 
 GPIO1.$name = "GPIO_LEDS";
 GPIO1.associatedPins[0].$name = "USER_LED_1";
-GPIO1.associatedPins[0].initialValue = "SET";
-GPIO1.associatedPins[0].pin.$assign = "PA0";
+GPIO1.associatedPins[0].initialValue = "CLEARED";
+GPIO1.associatedPins[0].pin.$assign = "PB22";
+
+GPIO2.$name = "GPIO_BUTTONS";
+GPIO2.associatedPins[0].$name = "USER_BUTTON_B21";
+GPIO2.associatedPins[0].direction = "INPUT";
+GPIO2.associatedPins[0].internalResistor = "PULL_UP";
+GPIO2.associatedPins[0].pin.$assign = "PB21";
 
 const Board = scripting.addModule("/ti/driverlib/Board", {}, false);
 

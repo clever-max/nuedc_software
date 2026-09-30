@@ -1,21 +1,54 @@
-# Project Instructions
+# Workspace Instructions
 
-## MSPM0 CCS Development
+## Workspace layout
 
-For all work in this project, read and apply the local MSPM0 skill before editing code or configuration:
+This directory is the repository root. Keep each CCS project in its own immediate child directory:
 
-`C:\Users\ASUS\workspace_ccstheia\mspm0-ccs\SKILL.md`
+- `empty/`: the original MSPM0G3507 starter project.
+- `photoresistor_uart/`: LM393 photoresistor, ADC, UART and Python monitor project.
+- `skills/mspm0-ccs/`: the shared MSPM0 CCS skill, scripts, references and examples.
+- `docs/`: workspace-wide Tianmengxing and LP-MSPM0G3507 reference material.
 
-Use the skill's bundled scripts with absolute paths when needed. In particular:
+Do not put project source files directly in the workspace root. A new project must have its own `AGENTS.md`, `.project`, `.cproject`, `.ccsproject`, `targetConfigs/`, SysConfig file and user source files. Start from the nearest existing project structure and update the project-specific entrypoint and configuration names.
 
-- Validate the project with `scripts/check_syscfg.py`.
-- Validate SysConfig output with `scripts/run_sysconfig.py` before rebuilding after `.syscfg` changes.
-- On this machine, pass `--tool D:\TI\CCS\ccs\utils\sysconfig_1.28.1\sysconfig_cli.bat --product D:\TI\CCS\mspm0_sdk_2_11_00_07\.metadata\product.json --compiler ticlang` because SysConfig is not on PATH.
-- Report the version warning when using SysConfig 1.28.1: `.cproject` declares SysConfig 1.26.2; do not change either version declaration without explicit user approval.
-- Treat `empty.syscfg` as the source of truth for pins, clocks, peripherals, DMA, and interrupts.
-- Do not hand-edit generated files: `ti_msp_dl_config.c`, `ti_msp_dl_config.h`, `device_linker.cmd`, `device.opt`, `Debug/`, object files, maps, or `.out` files.
-- Preserve the existing MSPM0G3507, CCS Theia, TI Arm Clang, XDS110, SDK 2.11.0.07, and SysConfig metadata unless the user explicitly requests a migration.
-- The active project entrypoint is `empty.c`; the target configuration is `targetConfigs/MSPM0G3507.ccxml`.
-- For LP-MSPM0G3507 board questions, consult the local reference index at `docs/reference/LP-MSPM0G3507/INDEX.md` and its extracted user-guide text before browsing TI again.
+## Required skill lookup
 
-After changes, report separately whether source checks, SysConfig generation, compilation, linking, and physical-board validation succeeded. Do not claim hardware validation without a connected board.
+Before editing any MSPM0 project or configuration, read the shared skill at the relative path:
+
+`skills/mspm0-ccs/SKILL.md`
+
+Use the skill's scripts through paths relative to this repository root, for example:
+
+```powershell
+python skills/mspm0-ccs/scripts/check_syscfg.py <project-dir>
+python skills/mspm0-ccs/scripts/run_sysconfig.py <project-dir> --compiler ticlang
+```
+
+When `.syscfg` changes, run SysConfig validation before rebuilding. Preserve the project-declared SysConfig version and report any installed-tool version warning. Do not hand-edit generated SysConfig or build outputs.
+
+## Local references
+
+For Tianmengxing MSPM0G3507 questions, read `docs/tmx-mspm0g3507-wiki-summary.md` first, then consult the original Wiki links listed there and inspect the current project's `.syscfg`, generated header and target configuration. For LP-MSPM0G3507 hardware facts, use `docs/reference/LP-MSPM0G3507/INDEX.md` and its local extracted text before browsing again.
+
+Distinguish the current project's actual configuration, a Wiki tutorial example and an inference. Do not mix pin assignments from different boards or modules.
+
+## Paths and portability
+
+Workspace documentation and project-to-workspace references must use relative paths. Do not add `C:\Users\...`, `D:\...` or another machine-specific workspace path to source, documentation, scripts or `AGENTS.md`.
+
+External TI installations are machine dependencies. Resolve them through CCS/SysConfig discovery, environment variables or the existing CCS project variables. If an external tool cannot be found, report the missing dependency and its expected role instead of embedding a new absolute path.
+
+CCS-generated metadata may contain an SDK origin field. Keep the SDK install variable form (`${COM_TI_MSPM0_SDK_INSTALL_DIR}`) and do not replace it with a user-specific absolute path.
+
+## Validation reporting
+
+Report these separately after implementation:
+
+1. source/static checks;
+2. SysConfig generation;
+3. compilation;
+4. linking;
+5. flash-tool result;
+6. physical-board and serial behavior.
+
+Never claim physical validation without a connected board and an observed result.
