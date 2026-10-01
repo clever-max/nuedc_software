@@ -111,7 +111,8 @@ int main(void)
         uart_puts("\r\n");
 
         DL_ADC12_enableConversions(ADC_PHOTO_INST);
-        delay_cycles(CPUCLK_FREQ / 5U);
+        /* 20 ms sample/update period: 50 Hz sensor, LED and UART update rate. */
+        delay_cycles(CPUCLK_FREQ / 50U);
     }
 }
 

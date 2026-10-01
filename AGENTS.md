@@ -52,3 +52,7 @@ Report these separately after implementation:
 6. physical-board and serial behavior.
 
 Never claim physical validation without a connected board and an observed result.
+
+## Mandatory flashable firmware artifact
+
+This rule applies to every existing and future project and its documentation in this repository: whenever a firmware task is reported complete, provide a directly flashable firmware image in that project's directory. Produce an Intel HEX `.hex` file by default; a `.txt` file is acceptable only when it contains a documented flash-tool-compatible image format. A source file, build log, or plain-text description is not a firmware image. If the image cannot be generated, do not report the firmware task as complete; state which build or tool dependency prevents producing it.

@@ -1,0 +1,96 @@
+/**
+ * Car project, MSPM0G3507 + AT8236 + dual MG513X GMR encoder motors.
+ * User motor inputs: PA0=AIN1, PA1=AIN2, PA8=BIN1, PA9=BIN2.
+ * Provisional encoder capture mapping: PB0/PB1=left A/B, PB2/PB3=right A/B.
+ * PB21 is the board user button; motors stay at zero PWM until a deliberate press.
+ * @cliArgs --device "MSPM0G350X" --package "LQFP-64(PM)" --part "Default"
+ * @v2CliArgs --device "MSPM0G3507" --package "LQFP-64(PM)"
+ * @versions {"tool":"1.26.2+4477"}
+ */
+const SYSCTL = scripting.addModule("/ti/driverlib/SYSCTL");
+const GPIO = scripting.addModule("/ti/driverlib/GPIO", {}, false);
+const GPIO_ENCODERS = GPIO.addInstance();
+const GPIO_BUTTONS = GPIO.addInstance();
+const PWM = scripting.addModule("/ti/driverlib/PWM", {}, false);
+const PWM_A = PWM.addInstance();
+const PWM_B = PWM.addInstance();
+const TIMER = scripting.addModule("/ti/driverlib/TIMER", {}, false);
+const CONTROL_TIMER = TIMER.addInstance();
+const UART = scripting.addModule("/ti/driverlib/UART", {}, false);
+const DEBUG_UART = UART.addInstance();
+const Board = scripting.addModule("/ti/driverlib/Board", {}, false);
+
+SYSCTL.forceDefaultClkConfig = true;
+
+GPIO_ENCODERS.$name = "ENCODERS";
+GPIO_ENCODERS.associatedPins.create(4);
+GPIO_ENCODERS.associatedPins[0].$name = "LEFT_ENCODER_A";
+GPIO_ENCODERS.associatedPins[0].direction = "INPUT";
+GPIO_ENCODERS.associatedPins[0].interruptEn = true;
+GPIO_ENCODERS.associatedPins[0].polarity = "RISE";
+GPIO_ENCODERS.associatedPins[0].pin.$assign = "PB0";
+GPIO_ENCODERS.associatedPins[1].$name = "LEFT_ENCODER_B";
+GPIO_ENCODERS.associatedPins[1].direction = "INPUT";
+GPIO_ENCODERS.associatedPins[1].pin.$assign = "PB1";
+GPIO_ENCODERS.associatedPins[2].$name = "RIGHT_ENCODER_A";
+GPIO_ENCODERS.associatedPins[2].direction = "INPUT";
+GPIO_ENCODERS.associatedPins[2].interruptEn = true;
+GPIO_ENCODERS.associatedPins[2].polarity = "RISE";
+GPIO_ENCODERS.associatedPins[2].pin.$assign = "PB2";
+GPIO_ENCODERS.associatedPins[3].$name = "RIGHT_ENCODER_B";
+GPIO_ENCODERS.associatedPins[3].direction = "INPUT";
+GPIO_ENCODERS.associatedPins[3].pin.$assign = "PB3";
+
+GPIO_BUTTONS.$name = "START_BUTTON";
+GPIO_BUTTONS.associatedPins[0].$name = "USER_BUTTON_B21";
+GPIO_BUTTONS.associatedPins[0].direction = "INPUT";
+GPIO_BUTTONS.associatedPins[0].internalResistor = "PULL_UP";
+GPIO_BUTTONS.associatedPins[0].pin.$assign = "PB21";
+
+/* A bridge: TIMG8_C1 -> PA0/AIN1, TIMG8_C0 -> PA1/AIN2. */
+PWM_A.$name = "MOTOR_A_PWM";
+PWM_A.timerCount = 3200;
+PWM_A.clockPrescale = 1;
+PWM_A.clockDivider = 1;
+PWM_A.timerStartTimer = true;
+PWM_A.pwmMode = "EDGE_ALIGN_UP";
+PWM_A.peripheral.$assign = "TIMG8";
+PWM_A.peripheral.ccp0Pin.$assign = "PA1";
+PWM_A.peripheral.ccp1Pin.$assign = "PA0";
+PWM_A.PWM_CHANNEL_0.$name = "AIN2_PWM";
+PWM_A.PWM_CHANNEL_0.dutyCycle = 0;
+PWM_A.PWM_CHANNEL_1.$name = "AIN1_PWM";
+PWM_A.PWM_CHANNEL_1.dutyCycle = 0;
+
+/* B bridge: TIMA0_C0 -> PA8/BIN1, TIMA0_C1 -> PA9/BIN2. */
+PWM_B.$name = "MOTOR_B_PWM";
+PWM_B.timerCount = 3200;
+PWM_B.clockPrescale = 1;
+PWM_B.clockDivider = 1;
+PWM_B.timerStartTimer = true;
+PWM_B.pwmMode = "EDGE_ALIGN_UP";
+PWM_B.peripheral.$assign = "TIMA0";
+PWM_B.peripheral.ccp0Pin.$assign = "PA8";
+PWM_B.peripheral.ccp1Pin.$assign = "PA9";
+PWM_B.PWM_CHANNEL_0.$name = "BIN1_PWM";
+PWM_B.PWM_CHANNEL_0.dutyCycle = 0;
+PWM_B.PWM_CHANNEL_1.$name = "BIN2_PWM";
+PWM_B.PWM_CHANNEL_1.dutyCycle = 0;
+
+CONTROL_TIMER.$name = "CONTROL_TICK";
+CONTROL_TIMER.timerMode = "PERIODIC";
+CONTROL_TIMER.timerPeriod = "5 ms";
+CONTROL_TIMER.timerStartTimer = true;
+CONTROL_TIMER.interrupts = ["ZERO"];
+CONTROL_TIMER.peripheral.$assign = "TIMG12";
+
+/* Tianmengxing on-board CH340E debug UART: UART0 on PA10/PA11. */
+DEBUG_UART.$name = "DEBUG_UART";
+DEBUG_UART.enableFIFO = true;
+DEBUG_UART.rxFifoThreshold = "DL_UART_RX_FIFO_LEVEL_ONE_ENTRY";
+DEBUG_UART.txFifoThreshold = "DL_UART_TX_FIFO_LEVEL_3_4_EMPTY";
+DEBUG_UART.targetBaudRate = 115200;
+DEBUG_UART.enabledInterrupts = ["RX"];
+DEBUG_UART.peripheral.$assign = "UART0";
+DEBUG_UART.peripheral.txPin.$assign = "PA10";
+DEBUG_UART.peripheral.rxPin.$assign = "PA11";

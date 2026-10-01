@@ -1,0 +1,29 @@
+/**
+ * MSPM0G3507 Tianmengxing board LED breathing effect.
+ * @cliArgs --device "MSPM0G350X" --part "Default" --package "LQFP-64(PM)" --product "mspm0_sdk@2.11.00.07"
+ * @v2CliArgs --device "MSPM0G3507" --package "LQFP-64(PM)" --product "mspm0_sdk@2.11.00.07"
+ * @versions {"tool":"1.26.2+4477"}
+ */
+
+const PWM = scripting.addModule("/ti/driverlib/PWM", {}, false);
+const PWM1 = PWM.addInstance();
+const SYSCTL = scripting.addModule("/ti/driverlib/SYSCTL");
+const Board = scripting.addModule("/ti/driverlib/Board", {}, false);
+
+SYSCTL.forceDefaultClkConfig = true;
+
+PWM1.$name = "PWM_0";
+PWM1.clockPrescale = 16;
+PWM1.peripheral.$assign = "TIMG8";
+PWM1.peripheral.ccp1Pin.$assign = "PB22";
+PWM1.PWM_CHANNEL_0.$name = "ti_driverlib_pwm_PWMTimerCC0";
+PWM1.PWM_CHANNEL_1.$name = "ti_driverlib_pwm_PWMTimerCC1";
+PWM1.PWM_CHANNEL_1.dutyCycle = 50;
+PWM1.ccp0PinConfig.$name = "ti_driverlib_gpio_GPIOPinGeneric0";
+PWM1.ccp1PinConfig.$name = "ti_driverlib_gpio_GPIOPinGeneric1";
+scripting.suppress("Solution may have changed,No suggested solution was provided, so this value may differ from the last time this tool was run", PWM1.peripheral, "ccp0Pin");
+
+PWM1.peripheral.ccp0Pin.$suggestSolution = "PA1";
+Board.peripheral.$suggestSolution = "DEBUGSS";
+Board.peripheral.swclkPin.$suggestSolution = "PA20";
+Board.peripheral.swdioPin.$suggestSolution = "PA19";

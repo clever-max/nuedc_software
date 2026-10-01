@@ -2,6 +2,7 @@
 import argparse
 import msvcrt
 import re
+import sys
 import threading
 import time
 
@@ -50,11 +51,14 @@ def main() -> None:
                 if state["frame"] is not None:
                     ao, volts, hw_do, sw, reported_threshold = state["frame"]
                     threshold = int(reported_threshold)
-                    text = (f"AO={ao:>4}  {volts} V  硬件DO={hw_do}  "
-                            f"软件={sw}  阈值={threshold:>4}   [+/-]±50 [/]±10 [g]查询 [q]退出")
+                    text = (f"AO={ao:>4} V={volts} DO={hw_do} SW={sw} "
+                            f"THR={threshold:>4} | +/-50 [ ]10 g:GET q:退出")
                 else:
-                    text = f"{state['message']}   [+/-]±50 [/]±10 [g]查询 [q]退出"
-                print("\r" + text[:150].ljust(150), end="", flush=True)
+                    text = f"{state['message']} | +/-50 [ ]10 g:GET q:退出"
+                # Clear the current terminal line before drawing the next frame.
+                # Do not pad to a fixed width: padding wider than the console causes wrapping.
+                sys.stdout.write("\r\x1b[2K" + text)
+                sys.stdout.flush()
                 if msvcrt.kbhit():
                     key = msvcrt.getwch().lower()
                     if key == "q":
@@ -77,7 +81,8 @@ def main() -> None:
         finally:
             stop.set()
             thread.join(timeout=1)
-            print()
+            sys.stdout.write("\r\x1b[2K\n")
+            sys.stdout.flush()
 
 
 if __name__ == "__main__":
