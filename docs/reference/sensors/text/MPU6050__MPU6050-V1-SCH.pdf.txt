@@ -1,0 +1,11 @@
+# MPU6050-V1-SCH.pdf
+
+Source: `../MPU6050/MPU6050-V1-SCH.pdf`
+Pages: 1
+
+
+---
+
+## Page 1
+
+[No text layer; inspect the source PDF/image.]

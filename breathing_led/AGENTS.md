@@ -7,3 +7,4 @@
 - Preserve MSPM0G3507, CCS Theia, TI Arm Clang, XDS110, SDK 2.11.0.07, and declared SysConfig version.
 - After `.syscfg` edits, run the shared `run_sysconfig.py` before rebuilding.
 - Report source checks, SysConfig generation, compilation, linking, and physical hardware validation separately.
+- For Tianmengxing board schematic, pin-map, TI documentation and CCS/Keil examples, use the workspace-wide `../docs/reference/Tianmengxing/INDEX.md`; search its `text/` and `examples/` folders with `rg`.

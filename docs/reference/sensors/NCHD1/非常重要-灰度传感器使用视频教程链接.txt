@@ -1,0 +1,16 @@
+温馨提示：
+1、首次使用时，如发现调节电位器信号指示灯不发生变化，考虑是自己单片机IO口没有配置成输入导致的，可以通过不接传感器信号输出，只供电测试来对比排查；
+2、特别说明灰度传感器上的电位器不是360度连续旋转的，两断有限位，切莫暴力去拧，推荐使用随传感器附送的一字起子来调节电位器，如果电位器拧坏可通过淘宝搜“3*3电位器”来购买更换，电阻值选1K、5K、10K均可以;
+
+一、12路灰度传感器升级部分功能说明 | 不带MCU实现I2C串行数据输出
+https://www.bilibili.com/video/BV1Ym1oYTECN/
+
+二、传感器原理与调节方法
+1、灰度传感器检测原理与电位器调节方法讲解
+https://www.bilibili.com/video/BV1qL411C7Bv
+2、安装高度与背景颜色对灰度传感器数据的影响演示
+https://www.bilibili.com/video/BV178411c7nA
+3、NC-HD1灰度传感器模块的电位器调节实际操作演示
+https://www.bilibili.com/video/BV1pb411f7R1
+4、NC-HD12灰度传感器模块的调试方法
+https://www.bilibili.com/video/BV1qM4y1k7oN

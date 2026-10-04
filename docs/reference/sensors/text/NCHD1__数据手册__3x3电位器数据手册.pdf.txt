@@ -1,0 +1,90 @@
+# 3x3电位器数据手册.pdf
+
+Source: `../NCHD1/数据手册/3x3电位器数据手册.pdf`
+Pages: 2
+
+
+---
+
+## Page 1
+
+SMD Cermet Trimmer Potentionmeter玻璃釉贴片电位器
+33X series
+   特性Features
+                           额定功率为0.15 瓦          带止档
+                             Rated power: 0.15 W                Equipped with a stopper
+                           可回流焊               体积小
+                             Reflow solderable                 Compact size
+                           金属玻璃釉              精度高
+                             Metal glass glaze                   High precision
+  产品系列尺寸图Product Series Dimension Drawing
+                                                33X Series
+
+
+
+
+
+   电气特性Electrical Characteristics
+参数名称Parameter Name                          参数指标Parameter Specification
+标称阻值范围Nominal Resistance Range                   100Ω-1MΩ
+阻值允许偏差Resistance Tolerance                   ±25%
+终端电阻Terminal Resistance                        R≥100MΩ（100Vdc）
+接触电阻变化Change in Contact Resistance              CRV≤5%R
+有效电行程Effective Electrical Travel                      240±20°
+   环境特性Environmental Characteristics
+参数名称Parameter Name                          参数指标Parameter Specification
+额定功率（最高工作电压50V）                                              0.15W@70℃Rated Power (Max Operating Voltage 50V)
+工作温度范围Operating Temperature Range              -40℃~ + 100℃
+电阻温度系数Resistance Temperature Coefficient           ±250 ppm /℃
+                                                   -55℃,30min,+125℃,30min,循环5 次;温度变化Temperature Cycling                                               ΔR≤±(2%R+0.1Ω),Δ(Uab/Uac）≤±3%
+储存温度范围Storage temperature range                 10℃~+40℃
+振动Vibration                                      10-55Hz,0.75mm,6h;ΔR≤±5%R,Δ(Uab/Uac）≤±5%
+
+
+
+                                                    - 1 -
+
+---
+
+## Page 2
+
+SMD Cermet Trimmer Potentionmeter玻璃釉贴片电位器
+负载寿命Load life                                 1000h,ΔR≤±5%R
+旋转寿命Rotating lifespan                        ΔR≤±10%R
+   物理特性Physical Characteristics
+ 参数名称Parameter Name                          参数指标Parameter Specification
+ 总机械行程Total Mechanical Travel                        270°±20°
+ 起动力矩Starting Torque                          1mN･m ~ 12mN･m
+止动强度Stop strength                           ≧15mN･m
+ 标准包装Standard Packaging                              2500 只/盘
+  标称阻值对照表Nominal Resistance Code Table
+                        标称阻值对照表Nominal Resistance Code Table
+                  阻值Resistance(Ω)                           阻值代码Code
+                         100                                                   12
+                         200                                                   22
+                         500                                                   52
+                         1000(1K)                                                 13
+                         2000(2K)                                                 23
+                         5000(5K)                                                 53
+                       10000(10K)                                                14
+                       20000(20K)                                                24
+                       50000(50K)                                                54
+                      100000(100K)                                               15
+                      200000(200K)                                               25
+                      500000(500K)                                               55
+                      1000000(1M)                                               16
+  产品命名规则Product Naming Rules
+                               命名规则Product Naming Rules
+
+
+
+                                 标准品或者订制品标识      系列             规格                                                          Standard or Customized      阻值代码Resistance Code            Series                       Specification                                                                Product MARK
+                                                                                             12
+                                          1=标准产品                      22           33                        X                                                             1=standard product                  54
+                                                                                             55
+
+
+
+
+
+                                                    - 2 -

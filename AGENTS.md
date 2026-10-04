@@ -1,3 +1,22 @@
+<!-- DO NOT EDIT - This part is automatically generated. -->
+
+# Agent Guidelines
+
+## CCStudio IDE Installation Directory
+
+CCStudio IDE is installed at `D:/TI/CCS`. Save it as `{ccs-install-dir}` for the session — scripts and tools will need it.
+
+## MANDATORY Pre-Task Requirement (DO NOT SKIP)
+
+**CRITICAL - NO EXCEPTIONS**: Before ANY CCS/Texas Instruments-related task (even simple ones), you MUST read `D:/TI/CCS/ccs/theia/resources/ai/CCS.md`. This file includes information on how to interact with CCS as well as device-specific information (UART backchannel pins, LED setup, transmit best practices, etc.). 
+
+Do NOT call any ccs-project, ccs-debug, ccs-sysconfig, or ccs-serial MCP tools until CCS.md has been read.
+
+
+<!-- DO NOT EDIT - This part is automatically generated. -->
+
+<!-- User instructions should be added below this line -->
+
 # Workspace Instructions
 
 ## Workspace layout
@@ -28,7 +47,7 @@ When `.syscfg` changes, run SysConfig validation before rebuilding. Preserve the
 
 ## Local references
 
-For Tianmengxing MSPM0G3507 questions, read `docs/tmx-mspm0g3507-wiki-summary.md` first, then consult the original Wiki links listed there and inspect the current project's `.syscfg`, generated header and target configuration. For LP-MSPM0G3507 hardware facts, use `docs/reference/LP-MSPM0G3507/INDEX.md` and its local extracted text before browsing again.
+For any workspace project using Tianmengxing MSPM0G3507, first read `docs/tmx-mspm0g3507-wiki-summary.md` and `docs/reference/Tianmengxing/INDEX.md`. Search its `text/` and `examples/` with `rg`; consult the original Wiki shortcuts when online updates are needed. Then inspect the current project's `.syscfg`, generated header and target configuration. For LP-MSPM0G3507 LaunchPad questions, use `docs/reference/LP-MSPM0G3507/INDEX.md` and its local extracted text. Keep the two board references distinct.
 
 Distinguish the current project's actual configuration, a Wiki tutorial example and an inference. Do not mix pin assignments from different boards or modules.
 

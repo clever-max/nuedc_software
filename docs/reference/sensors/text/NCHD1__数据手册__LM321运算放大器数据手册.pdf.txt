@@ -1,0 +1,404 @@
+# LM321运算放大器数据手册.pdf
+
+Source: `../NCHD1/数据手册/LM321运算放大器数据手册.pdf`
+Pages: 9
+
+
+---
+
+## Page 1
+
+UMW LM321MF
+
+
+
+1.Description                             2.Features
+
+The LM321 brings performance and economy to low             Gain - Bandwidth product: 1MHz
+power systems. With a high unity gain frequency              Low supply current: 430µA
+and a guaranteed 0.4V/µs slew rate, the quiescent            Low input bias current: 45nA
+current is only 430µA/amplifier (5V ). The input co-             Wide supply voltage range: +3V to +32V
+mmon mode range includes ground and therefore
+the device is able to operate in single supply appli-
+                                          3.Applicationscation s as well as in dual supply applications. It is
+also capable of comfortably driving large capacitive              Chargers
+loads.The LM321 is available in the SOT-23-5L pack            Power supplies
+age. Overall the LM321 is a low power, wide supply                  Industrial: controls, instruments
+range per formance opamp that can be designed into            Desktops
+a wide range of applications at an economical price             Communications infrastructure
+without sacrificing valuable board space.
+
+
+4.Pinning Information
+
+
+
+
+
+                                         1                     5                                      +IN                       V+
+
+                                                +
+                                         2                                            V-
+                                                                                   -
+
+                                         3                     4
+                                              -IN                     OUTPUT
+
+
+                              SOT23-5
+
+
+
+
+
+UTD Semiconductor Co.,Limited
+www.umw-ic.com                                        Jul.2025                                           1 of 9
+
+---
+
+## Page 2
+
+www.umw-ic.com                UMW LM321MF
+
+
+
+5.Absolute Maximum Ratings (Note 1 )
+
+                             Parameter                                  Value    Units
+ Supply Voltage, (V+ - V-)                                                          32      V
+
+ Input Voltage                                                                                   -0.3 ~ 32    V
+
+ Output Short Circuit to GND V+ ≤ 15V and TA=25°C (Note2)                             Continuous
+
+ Junction Temperature (Note3)                                                     150       °C
+
+ Thermal Resistance to Ambient (θJA)                                                265       °C
+
+ Operating Temperature Range                                                           -40 ~ 85     °C
+
+ Storage Temperature Range                                                            -65 ~ 150    °C
+
+6.Electrical Characteristics (Unless otherwise specified: V+=5.0V)
+
+          Parameter          Symbol       Conditions            Min  Typ Max Units
+ Input Offset Voltage                    VOS    TA=25°C (Note 4)                      2    5   mV
+
+ Input Bias Current                                 IB      TA=25°C,IIN(+) or IIN(-),VCM=0V(Note5)        45   250   nA
+
+ Input Offset Current                           IOS    TA=25°C, IIN(+) - IIN(-), VCM=0V              3    50   nA
+
+ Input Common Mode Voltage Range     VCM    TA=25°C, V+=30V (Note 6)          0          V+-1.5  V
+
+                                          Over the entire
+                                                             V+=30V         0.66   2   mA
+                                               temperature range,
+ Supply Current                                     IS
+                                       RL=∞ on all operational
+                                                              V+=5V          0.43   1.2  mA
+                                                     amplifiers
+
+                                             V+=15V, TA=25°C, RL≥2kΩ
+ Large Signal Voltage Gain              AV                                  50   100       V/mV
+                                                             (for VO=1~11V)
+
+ Common-Mode Rejection Ratio     CMRR  DC, TA=25°C, VCM=0~V+-1.5V       70   90        dB
+
+ Power Supply Rejection Ratio       PSRR  DC, TA=25°C, V+=5~30V           75   100        dB
+
+ Output Current Sourcing                  ISOURCE   VID=+1V, V+=15V, VO=2V           20   40      mA
+
+                                                   VID=-1V, V+=15V, VO=2V           10   20      mA
+ Output Current Sinking                          ISINK
+                                                   VID=-1V, V+=15V, VO=0.2V          12   100       μA
+
+
+
+
+
+                                               UTD Semiconductor Co.,Limited
+2 of 9                                                                                    Jul.2025
+
+---
+
+## Page 3
+
+www.umw-ic.com                UMW LM321MF
+
+
+
+
+          Parameter          Symbol       Conditions            Min  Typ Max Units
+                                                       RL=2KΩ     26            V
+                                     VOH    V+=30V
+ Output Voltage Swing                                      RL=10KΩ    27   28        V
+                                        VOL    V+=5V, RL=10KΩ                       5    20  mV
+
+ Output Short Circuit to Ground               IO    V+=15V                              40   85  mA
+
+                                             V+=15V, RL=2kΩ, VIN=0.5 to 3V
+ Slew Rate                    SR                                               0.4         V/µs
+                                            CL=100pF, Unity Gain
+
+                                             V+=30V, f=100kHz, VIN=10mV
+ Gain Bandwidth Product         GBW                                       1       MHz
+                                           RL=2kΩ, CL=100pF
+
+ Phase Margin                 φm                                       60          degrees
+
+                                               f=1kHz, AV=20dB, RL=2kΩ
+ Total Harmonic Distortion           THD                                              0.015%
+                                              VO=2VPP, CL=100pF, V+=30V
+
+ Equivalent Input Noise Voltage            en     f=1kHz, RS=100Ω, V+=30V               40          nV/√Hz
+
+
+Note 1 Absolute Maximum Ratings indicate limits beyond which damage to the device mayoccur. Operating Ratings indicate
+condition s for which the device is intended to be functional, but specific performance is not guaranteed. For guaranteed
+specifications and the test conditions, see the Electrical Characte ristics.
+Note 2 : Shortcircuits from the output to V+ can cause excessive heating and eventual destruction. When considering short
+circuits to ground, the maximum output current is approximately 40mA independent of the magnitude of V+ . At values of supply
+voltage in excess of +15V, continuous short -circuits can exceed the power dissipation ratings and cause eventualde struction.
+Destructive dissipation canresult from simultaneous shorts on all amplifiers.
+Note 3: The maximum power dissipation is a function of TJ(MAX), θJA, and TA. The maximum allowable power dissipation at any
+ambient temperature is PD=(TJ(MAX)- TA)/θJA . All numbers apply for packages soldered directly onto a PC board.
+Note 4 : VO=1.4V, RS=0, with V+ from 5V to 30V; and over the full input common -mode range (0V to V+ -1.5V ) at 25°C.
+Note 5: The direction of the input current is out of the IC due to the PNP input stage. Thiscurrent is essentially constant,
+independent of the state of the output so no loading changeexists on the input lines.
+Note 6: The input common-mode voltage of either input signal voltage should not beallowed to go negative by more than 0.3V
+(at 25°C). The upper end of them common-modevoltage range is V+-1.5V (at 25°C), but either or both inputs can go to +32V
+without damage, independent of the magnitude of V+.
+Note 7: Due to proximity of external components, insure that coupling is not originating viastray capacitance between these
+external parts. This typically can be detected as this type ofcapacitance increases at higher frequencies.
+
+
+
+
+
+                UTD Semiconductor Co.,Limited
+                       Jul.2025                                                                       3 of 9
+
+---
+
+## Page 4
+
+www.umw-ic.com                UMW LM321MF
+
+
+
+7.Simplified Schematic
+
+
+
+
+
+8.Application Circuit
+
+
+
+
+
+                                      DC Summing Amplifier
+                                                                             (VIN'S ≥ 0VDC and VO ≥ VDC)
+
+Where: VO=V1 + V2 - V3 - V4, (V1 + V2) ≥ (V3 + V4) to keep VO > 0VDC
+
+
+
+
+
+                                               UTD Semiconductor Co.,Limited
+4 of 9                                                                                    Jul.2025
+
+---
+
+## Page 5
+
+www.umw-ic.com                UMW LM321MF
+
+
+
+9.Typical Application
+
+
+
+
+
+                UTD Semiconductor Co.,Limited
+                       Jul.2025                                                                       5 of 9
+
+---
+
+## Page 6
+
+www.umw-ic.com                UMW LM321MF
+
+
+
+10.Typical Characterisitics
+
+
+                                                                             (V)
+          (mV)                                                                  VOL
+                  Voltage                                                                                                                                    Output-
+                                                   VO
+
+                                                                             (V)          (mV)
+                                                                             VOL
+                  Voltage                                                                                                              Input
+
+                          -
+                                                                             VIN
+                    Time (μs)                                       Time (μs)
+
+         Figure 1: Small Signal Pulse Response                 Figure 2: Large Signal Pulse Response
+
+
+          (μA)                                                                                        (mA)
+                  Current                                                                                                                                                          Current
+               Supply                                                                                                                                                          Sinking
+
+
+
+                 Supply Voltage (V)                                  Output Voltage (V)
+
+       Figure 3: Supply Current vs. Supply Voltage             Figure 4: Sinking Current vs. Output Voltage
+
+
+          (mA)                                                                                                      (dB)
+                                                                                                      Gain                  Current
+                                                                                                                                                                                   Voltage               Source
+
+
+                  Output Voltage (V)                                  Frequency (Hz)
+
+       Figure 5: Source Current vs. Output Voltage             Figure 6: Open Loop Frequency Response
+
+
+
+                                               UTD Semiconductor Co.,Limited
+6 of 9                                                                                    Jul.2025
+
+---
+
+## Page 7
+
+www.umw-ic.com                UMW LM321MF
+
+
+
+11.SOT-23-5 Package Outline Dimensions
+
+
+
+                            D                                           θ
+
+                                               b                                                                                                      0.2
+
+                                                                            L
+
+
+
+
+            E                                        E1
+
+
+
+
+
+                                e                                                          c
+
+
+                                    e1
+
+                                                                       A1
+
+
+
+                                                                         A2    A
+
+
+
+
+DIMENSIONS (mm are the original dimensions)
+
+  Symbol   A   A1   A2    b     c   D   E1   E    e    e1    L     θ
+    Min     1.050  0.000  1.050  0.300  0.100  2.820  1.500  2.650  0.950  1.800  0.300    0°
+    Max     1.250  0.100  1.150  0.500  0.200  3.020  1.700  2.950  BSC  2.000  0.600    8°
+
+
+
+
+
+                UTD Semiconductor Co.,Limited
+                       Jul.2025                                                                       7 of 9
+
+---
+
+## Page 8
+
+www.umw-ic.com                UMW LM321MF
+
+
+
+12.Ordering Information
+
+
+
+                 A63A
+                                UMW ww
+
+                                                         ww: Batch Code
+
+
+      Order Code           Package            Base QTY            Delivery Mode
+   UMW LM321MF            SOT23-5                  3000                Tape and reel
+
+
+
+
+
+                                               UTD Semiconductor Co.,Limited
+8 of 9                                                                                    Jul.2025
+
+---
+
+## Page 9
+
+www.umw-ic.com                UMW LM321MF
+
+
+
+13.Disclaimer
+
+UMW reserves the right to make changes to all products, specifications. Customers should obtain the latest version
+of product documentation and verify the completeness and currency of the information before placing an order.
+
+
+When applying our products, please do not exceed the maximum rated values, as this may affect the reliability of the
+entire system. Under certain conditions, any semiconductor product may experience faults or failures. Buyers are
+responsible for adhering to safety standards and implementing safety measures during system design, prototyping,
+and manufacturing when using our products to prevent potential failure risks that could lead to personal injury or
+property damage.
+
+
+Unless explicitly stated in writing, UMW products are not intended for use in medical, life-saving, or life-sustaining
+applications, nor for any other applications where product failure could result in personal injury or death. If customers
+use or sell the product for such applications without explicit authorization, they assume all associated risks.
+
+
+When reselling, applying, or exporting, please comply with export control laws and regulations of China, the United
+States, the United Kingdom, the European Union, and other relevant countries, regions, and international
+organizations.
+
+
+This document and any actions by UMW do not grant any intellectual property rights, whether express or implied,
+by estoppel or otherwise. The product names and marks mentioned herein may be trademarks of their respective
+owners.
+
+
+
+
+
+                UTD Semiconductor Co.,Limited
+                       Jul.2025                                                                       9 of 9

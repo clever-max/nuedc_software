@@ -8,6 +8,8 @@ Use this directory for information that must remain understandable outside the s
 - `DEVELOPMENT_PLAN.md`: team organization, milestones, repository workflow, and project completion criteria
 - `PROJECT_README.md`: current example project role, toolchain, and status
 - `reference/LP-MSPM0G3507/INDEX.md`: local offline reference cache for the LaunchPad board
+- `reference/Tianmengxing/INDEX.md`: shared, searchable Tianmengxing MSPM0G3507 schematic, pin map, TI references, and example-code library
+- `reference/sensors/INDEX.md`: shared NCHD1 multi-channel grayscale sensor, NCHD12 I²C examples, PCA9555, and MPU6050 schematic references
 
 ## Planned documents
 

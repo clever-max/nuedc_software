@@ -36,6 +36,7 @@
 .vscode/
 *.launch
 *.ccsworkspace
+*.theia-workspace
 *.uvguix*
 *.uvoptx
 *.log

@@ -35,3 +35,5 @@ After changes, report separately whether source checks, SysConfig generation, co
 5. 涉及网页资料的回答附上对应原始页面链接；涉及本地工程的回答附上本地文件路径。
 
 如果本地整理文档没有覆盖问题，再沿天猛星 Wiki 根路径检索相关子页面；不要默认引用同一站点的地猛星、地正星或其他 MSPM0 开发板内容。
+
+工作区共享的天猛星板级原理图、引脚图、TI 文档和 CCS/Keil 示例另见 `../docs/reference/Tianmengxing/INDEX.md`，可用 `rg` 检索其 `text/` 与 `examples/`。本工程硬件目标是 LP-MSPM0G3507，不能把天猛星排针接线直接套用到本工程。
