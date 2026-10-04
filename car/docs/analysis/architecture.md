@@ -1,24 +1,43 @@
-# Car project module boundaries
-
-The project follows the repository guide's dependency direction and keeps the current mission as a cautious open-loop demo:
+# Current closed-loop route architecture
 
 ```text
 car.c
-  -> app/app.c (initialization, scheduling, button and IRQ dispatch)
-       -> mission/demo_mission.c (15 s demo state machine)
-       -> protocol/serial_console.c (RUN15/STOP parser and telemetry)
-       -> control/wheel_speed_controller.c (independent A/B incremental PID; not enabled)
-       -> bsp/encoder.c (signed edge counts and speed/distance conversion)
-       -> bsp/motor_pwm.c (signed PWM, direction and coast)
+  -> app/app.c (timer schedule, button/UART dispatch, sensor update)
+       -> mission/demo_mission.c (15 s gray line-following PID state)
+       -> control/wheel_speed_controller.c (independent A/B incremental PID)
+       -> bsp/encoder.c (signed A-edge counts and mm/s conversion)
+       -> bsp/jy61s_uart.c (JY61S UART2 frame parser, retained for future gyro use)
+       -> bsp/gray_sensor.c (NCHD12/PCA9555-compatible software I2C on PA28/PA31)
+       -> bsp/buzzer.c (PB27 start/stop notification)
+       -> bsp/motor_pwm.c (AT8236 signed PWM and Motor-B polarity mapping)
        -> SysConfig generated DriverLib layer
 ```
 
-`car.c` is limited to the application entry point and interrupt vectors. GPIO ISRs dispatch to short BSP handlers. The 5 ms timer ISR only counts elapsed ticks and schedules 10 Hz telemetry. Main-loop code copies the pending tick count, converts encoder deltas using the actual elapsed interval, advances the mission, parses serial commands and formats telemetry.
+## Control cycle
 
-`control/wheel_speed_controller.c` provides separate incremental PID state for each wheel. It accepts explicit gains and an output limit in signed PWM permille, uses measured `dt`, clamps the accumulated output, and resets a wheel's history at zero target. No default gains are supplied and the 15-second mission does not call this module: no wheel-speed PID is active until encoder polarity/count scale, motor response and safe gains are calibrated.
+Every 5 ms the timer ISR increments a pending-tick counter. The foreground consumes pending ticks and:
 
-`bsp/motor_pwm.c` owns AT8236 timer compare indices, forward polarity, reverse polarity, signed command limits and coast output. `bsp/encoder.c` owns the GPIO edge-counter state and count-to-mm/s conversion. `mission/demo_mission.c` owns the timed ramp/run/stop states. `protocol/serial_console.c` only receives newline-terminated RUN15/STOP commands and prints status; it does not control hardware directly.
+1. Copies encoder counts and converts each wheel delta to mm/s.
+2. Reads the 12-channel gray bit map and converts it to a line-position error.
+3. Computes a gray P/D correction and updates independent wheel speed PID outputs.
+4. Parses any JY61S UART2 frames for telemetry/future use; gyro is not required by this demo.
+5. Writes signed PWM to the AT8236 bridge and updates the PB27 buzzer state.
 
-Encoder conversion uses the user-provided 13 PPR, 1:28 ratio and 65 mm wheel diameter with one A rising edge per encoder cycle. This corresponds to 364 counts per wheel revolution if the PPR denotes channel-A cycles per motor revolution; confirm with a measured revolution before using it for calibrated speed or distance.
+Encoder interrupts do only count A-channel rising edges and sample B for direction. JY61S must be in UART mode; its gyro stream is bias-calibrated while the chassis is stationary. Missing or invalid UART frames mark the gyro unavailable and prevent route start.
 
-The CCS project source entries include `bsp/`, `app/`, `protocol/`, `control/` and `mission/`. SysConfig remains the source of pin and peripheral configuration. Generated files in `Debug/` are tool-owned and must not be edited manually.
+## Route states
+
+The active demo is `STRAIGHT_1` for 15 s. It keeps a 200 mm/s base target, applies gray-position correction to the two wheel targets, and stops in `DONE`. A `STOP` command or second B21 press enters `ABORTED` and coasts.
+
+The sign `RIGHT_TURN_YAW_SIGN` is `-1` for the standard MPU6050 Z-axis convention used here. If a physical right turn changes yaw in the opposite sign, change that one constant after checking telemetry.
+
+## Parameters and limits
+
+- Wheel target: 200 mm/s.
+- Initial speed PID: `Kp=0.50`, `Ki=0.20`, `Kd=0`, feed-forward `1.0 permille/(mm/s)`, output limit ±1000‰. The derivative term is exposed but starts at zero because the one-edge Hall measurement is quantized at low speed.
+- Initial turn angle controller: `Kp=4.0 mm/s/deg`, `Ki=0`, `Kd=0.25 mm/s/(deg/s)`, command limit ±200 mm/s and minimum 45 mm/s outside the ±1.5° settle band.
+- Hall encoder scale: 13 PPR × 28 gearbox, one A rising edge per motor revolution cycle, 65 mm wheel; verify with one measured wheel revolution.
+- JY61S UART2: PB15=TX, PB16=RX, 115200-8-N-1; its files remain available but are not a start condition for this demo. See [JY61S notes](JY61S_notes.md).
+- Gray sensor: PA28=SCL, PA31=SDA, PCA9555-compatible 7-bit address `0x20`.
+
+The PID values and heading gains are starting values, not physical calibration. Use the UART fields `state`, `gyro`, `yaw`, `target_yaw`, `speed` and `pwm_permille` to tune them safely.

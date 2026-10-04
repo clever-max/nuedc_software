@@ -20,7 +20,7 @@ The user corrected the earlier identification: the installed motors are **MG513X
 
 Do not reuse the previous GMR assumptions (500 PPR, 3.3 V supply, GMR power-wire polarity). The local supplied motor drawings are primarily mechanical and do not independently verify these electrical specifications or connector pin order.
 
-## Current encoder count model
+## Encoder count model (initial estimate; calibrate before claiming accuracy)
 
 `bsp/encoder.c` counts only **channel A rising edges**, sampling channel B to determine direction. The current estimate therefore uses:
 
@@ -35,14 +35,14 @@ This is a working conversion based on the user's PPR value and current edge mode
 
 The user supplied a D157B motor-connector diagram: Motor A/MOTORC1 pins 3 and 4 are E1A/E1B; Motor B/MOTORC2 pins 3 and 4 are E2A/E2B; pin 5 is marked 5V; pins 1 and 6 are the motor outputs. The D157B pinout is also depicted in `../vendor/5.原理图/2.AT8236稳压模块原理图（D157B）.pdf`.
 
-The diagram establishes connector routing and the marked encoder supply, but does not by itself establish whether Hall A/B output highs are 3.3 V, 5 V push-pull, or open-drain. MSPM0G3507 does not make every GPIO 5 V tolerant; only designated pins have 5 V-tolerant open-drain capability. Before connecting the 5 V-powered Hall signals directly to PB0–PB3, verify the encoder output circuit/voltage and each MCU pin's tolerance. Use 3.3 V-compatible signaling or suitable level translation where needed. The user's earlier J5→PB mapping and 3.3 V encoder supply were for the previous GMR identification and must not be assumed to describe the current Hall wiring.
+The diagram establishes connector routing and the marked encoder supply, but does not by itself establish whether Hall A/B output highs are 3.3 V, 5 V push-pull, or open-drain. MSPM0G3507 does not make every GPIO 5 V tolerant; only designated pins have 5 V-tolerant open-drain capability. Before connecting the 5 V-powered Hall signals directly to PA27/PA25/PB25/PB20, verify the encoder output circuit/voltage and each MCU pin's tolerance. Use 3.3 V-compatible signaling or suitable level translation where needed. The user's earlier J5→PB mapping and 3.3 V encoder supply were for the previous GMR identification and must not be assumed to describe the current Hall wiring.
 
-## Project implementation
+## Project implementation status
 
-- Encoder inputs currently use PB0/PB1 for Motor A E1A/E1B and PB2/PB3 for Motor B E2A/E2B; this mapping should be confirmed against the actual harness.
-- Motor input wiring remains PA0/A0→AIN1, PA1/A1→AIN2, PA8/A8→BIN1, PA9/A9→BIN2.
-- `bsp/encoder.c` contains the current 13 PPR × 28 × 65 mm conversion estimate. The 15-second mission remains open-loop: encoder readings are telemetry only and do not correct motor speed or trajectory.
-- `control/wheel_speed_controller.c` now provides a twin incremental-PID module following the reference project's structure. It requires caller-supplied gains and is not connected to the active mission.
+- The current route uses encoder feedback. E1A/E1B/E2A/E2B are PA27/PA25/PB25/PB20; A-phase rising edges are counted and B phase determines sign.
+- Current PWM input wiring is PA0/PA1/PA8/PA9→AIN1/AIN2/BIN1/BIN2, as documented in [wiring.md](wiring.md).
+- `bsp/encoder.c` uses the 13 PPR × 28 × 65 mm initial conversion estimate; calibrate one measured wheel revolution before tuning PID.
+- `control/wheel_speed_controller.c` now provides the twin-wheel incremental speed PID used by the active route. Its gains are commissioning values and must be tuned from telemetry before claiming calibrated speed.
 
 ## References
 

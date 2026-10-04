@@ -40,8 +40,8 @@ The D157B STM32 instructions say its example can run open-loop or closed-loop an
 - Do not copy the sample's periodic direction reversal into the car project; reversal while spinning can cause abrupt braking/current transients.
 - Verify whether low/low coast behavior is acceptable as the project's startup state for the exact module variant.
 - UART0 telemetry is configured on PA10/PA11 at 115200 baud through the Tianmengxing board's CH340E.
-- Encoder GPIO mapping PB0-PB3 is currently configured as A/B inputs, but the current Hall harness-to-GPIO path must be confirmed. The user-provided motor connectors list E1/E2 signals and a 5V pin; confirm signal voltage and pin tolerance before connection.
-- No battery ADC input is assigned. Motor direction polarity remains configurable in `car.c` and must be checked with the wheels off the floor.
+- Encoder GPIO mapping is now E1A/E1B/E2A/E2B→PA27/PA25/PB25/PB20, as recorded in [wiring.md](wiring.md). The user-provided motor connectors list E1/E2 signals and a 5V pin; confirm signal voltage and pin tolerance before connection.
+- No battery ADC input is assigned. The active PWM mapping is the four direct MCU signals PA0/PA1/PA8/PA9→AIN1/AIN2/BIN1/BIN2; direction polarity is configured in `bsp/motor_pwm.c` and should be checked with the wheels clear of the floor.
 
 ## Package version observation
 

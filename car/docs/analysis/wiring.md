@@ -1,34 +1,56 @@
-# User wiring and project mapping
+# Current user wiring and project mapping
 
-## Motor control inputs
+## Motor driver inputs
 
-| MSPM0G3507 port pin | AT8236 input | Status |
+| MCU pin / timer | AT8236 signal |
+| --- | --- |
+| PA0 / TIMG8_C1 | AIN1 |
+| PA1 / TIMG8_C0 | AIN2 |
+| PA8 / TIMA0_C0 | BIN1 |
+| PA9 / TIMA0_C1 | BIN2 |
+
+These are the four AT8236 logic inputs. The 12 V motor supply, motor outputs and common ground remain on the AT8236 side. Do not confuse AIN/BIN with the AOUT/BOUT motor terminals.
+
+## Hall encoder inputs
+
+| Motor signal | MCU pin | Mode |
 | --- | --- | --- |
-| PA0 (A0) | AIN1 | user confirmed |
-| PA1 (A1) | AIN2 | user confirmed |
-| PA8 (A8) | BIN1 | user confirmed |
-| PA9 (A9) | BIN2 | user confirmed |
+| E1A | PA27 | GPIO interrupt, A rising edge |
+| E1B | PA25 | GPIO input, direction sample |
+| E2A | PB25 | GPIO interrupt, A rising edge |
+| E2B | PB20 | GPIO input, direction sample |
 
-This is the wiring supplied by the user and is configured in `../../car.syscfg`.
+The current encoder code uses one A rising edge per encoder PPR cycle and samples B. With the user-provided 13 PPR, 1:28 gear ratio and 65 mm wheel, the initial estimate is 364 counts per wheel revolution. Verify this scale mechanically before treating speed as calibrated.
 
-On the supplied D157B schematic, the 4-pin `Input_IO` header J4 is pin 1=BIN2, pin 2=BIN1, pin 3=AIN2, pin 4=AIN1. The J8/MOTORC1 and J3/MOTORC2 connectors carry the motor leads; those power outputs do not connect to MSPM0 GPIO.
+## JY61S（UART 模式）
 
-## Encoder feedback outputs and current Hall version
+| JY61S signal | MCU pin | Function |
+| --- | --- | --- |
+| TX | PB16 | UART2_RX |
+| RX | PB15 | UART2_TX |
+| SCL/SDA/INT | open | not used by the active UART driver |
 
-The user corrected the installed motor type from GMR to **Hall encoder MG513X**. The supplied motor wiring image and local D157B schematic show these 6-pin motor connectors:
+The active driver parses JY61S `0x55 0x52` angular-velocity frames at 115200 baud and calibrates Z-axis bias from 100 samples while the car is still. UART0 PA10/PA11 remains the debug console. Set the sensor to UART mode with the configuration command `FF AA 61` before use.
 
-| Connector | Pin 1 | Pin 2 | Pin 3 | Pin 4 | Pin 5 | Pin 6 |
-| --- | --- | --- | --- | --- | --- | --- |
-| MOTORC1 / Motor A | AOUT2 | GND | E1A | E1B | 5V | AOUT1 |
-| MOTORC2 / Motor B | BOUT2 | GND | E2A | E2B | 5V | BOUT1 |
+## Buzzer
 
-The MCU firmware mapping currently uses E1A/E1B→PB0/PB1 and E2A/E2B→PB2/PB3. Pin 5 is labeled 5V in the diagram. The signal high voltage/output topology is not established by this connector drawing; verify before directly wiring A/B into MCU pins. Only designated MSPM0 pins are 5-V tolerant open-drain pins, so do not assume PB0-PB3 accept 5 V. Use compatible 3.3 V signaling or level translation if required.
+The passive buzzer signal is on PB27. The pin is configured as a GPIO output and starts low. The active demo toggles it at a low audible rate for start/stop notification; do not drive a high-current buzzer directly from the MCU pin.
 
-The previous notes claiming a GMR variant, 500 PPR, and 3.3 V encoder supply were based on the earlier mistaken identification and are superseded. Do not apply the old J5/3V3 wiring claim to the current Hall motor setup without checking the actual harness.
-## Configuration and motion start
+## Gray sensor reservation
 
-The firmware uses a 5 ms task to apply the open-loop ramp/timer and publish encoder telemetry. GPIO interrupts only count A-phase rising edges while B phase determines sign. Encoder feedback is diagnostic only and does not correct speed or direction. The firmware remains stopped on reset.
+The current user arrangement uses PA28/PA31 as a software I2C bus for the NCHD1/NCHD12 gray sensor. Do not use PA0/PA1 for gray I2C because they are motor PWM. See the shared sensor index at `../../../docs/reference/sensors/INDEX.md`.
 
-The motor input mapping and 65 mm wheel diameter are user confirmed. The user now identifies the motors as 12 V, 1:28 Hall MG513X with 13 PPR encoders; these values have not yet been independently reconciled with the connector electrical levels or a measured revolution count. Current fixed PWM trims do not ensure straight travel or a specified distance.
+## NCHD12 12-channel grayscale sensor
 
+| NCHD12 signal | MCU pin | Function |
+| --- | --- | --- |
+| SCL | PA28 | software I2C clock |
+| SDA | PA31 | software I2C data |
+| VCC | 3.3V output setting | MSPM0-safe logic level |
+| GND | GND | common ground |
 
+The PCA9555-compatible device is read at write/read addresses `0x40/0x41` (7-bit `0x20`). The input register starts at `0x00`; the lower 12 bits are the sensor state.
+
+## Board configuration source
+
+The active mapping is in `../../car.syscfg`. Generated headers under `Debug/` are inspection outputs only. The Tianmengxing pin map and schematic are indexed at `../../../docs/reference/Tianmengxing/INDEX.md`.
