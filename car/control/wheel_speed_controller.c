@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stddef.h>
 
+/* 左右轮各自维护一套增量 PID，输入为编码器换算的 mm/s，输出为 PWM 千分比。 */
 static float clampf(float value, float low, float high)
 {
     if (value < low) return low;
@@ -12,7 +13,8 @@ static float clampf(float value, float low, float high)
 
 static void resetPid(WheelSpeedPid *pid)
 {
-    pid->output_permille = 0.0f;
+    /* 重新进入一个运动阶段时，用前馈值作为输出初值，避免从零突跳。 */
+    pid->output_permille = pid->target_mm_s * pid->feedforward_permille_per_mm_s;
     pid->error_1 = 0.0f;
     pid->error_2 = 0.0f;
 }
@@ -23,12 +25,14 @@ static int16_t updatePid(WheelSpeedPid *pid, float measured_mm_s,
     float error;
     float delta;
 
+    /* 零目标时清空历史，确保停止后积分/微分不会残留。 */
     if (fabsf(pid->target_mm_s) < 0.5f || dt_s <= 0.0f) {
         resetPid(pid);
         return 0;
     }
 
     error = pid->target_mm_s - measured_mm_s;
+    /* 增量式 PID：只计算本周期输出变化，再做总输出限幅。 */
     delta = pid->kp * (error - pid->error_1) +
         pid->ki * dt_s * error +
         (pid->kd / dt_s) * (error - 2.0f * pid->error_1 + pid->error_2);
@@ -39,16 +43,19 @@ static int16_t updatePid(WheelSpeedPid *pid, float measured_mm_s,
 }
 
 void WheelSpeedController_Init(DualWheelSpeedController *controller,
-    float kp, float ki, float kd, float max_output_permille)
+    float kp, float ki, float kd, float feedforward_permille_per_mm_s,
+    float max_output_permille)
 {
     if (controller == NULL) return;
     controller->max_output_permille = clampf(max_output_permille, 0.0f, 1000.0f);
     controller->motor_a.kp = kp;
     controller->motor_a.ki = ki;
     controller->motor_a.kd = kd;
+    controller->motor_a.feedforward_permille_per_mm_s = feedforward_permille_per_mm_s;
     controller->motor_b.kp = kp;
     controller->motor_b.ki = ki;
     controller->motor_b.kd = kd;
+    controller->motor_b.feedforward_permille_per_mm_s = feedforward_permille_per_mm_s;
     controller->motor_a.target_mm_s = 0.0f;
     controller->motor_b.target_mm_s = 0.0f;
     resetPid(&controller->motor_a);
@@ -59,6 +66,7 @@ void WheelSpeedController_SetTargets(DualWheelSpeedController *controller,
     float motor_a_mm_s, float motor_b_mm_s)
 {
     if (controller == NULL) return;
+    /* 目标由任务层实时更新，PID 历史只在 Reset 或零目标时清理。 */
     controller->motor_a.target_mm_s = motor_a_mm_s;
     controller->motor_b.target_mm_s = motor_b_mm_s;
 }

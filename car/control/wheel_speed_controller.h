@@ -7,6 +7,7 @@ typedef struct {
     float kp;
     float ki;
     float kd;
+    float feedforward_permille_per_mm_s;
     float target_mm_s;
     float output_permille;
     float error_1;
@@ -19,9 +20,10 @@ typedef struct {
     float max_output_permille;
 } DualWheelSpeedController;
 
-/* Gains and output limit are caller supplied; no uncalibrated gains are enabled. */
+/* 增益、前馈和 PWM 限幅由任务层提供；本模块不隐藏硬件标定参数。 */
 void WheelSpeedController_Init(DualWheelSpeedController *controller,
-    float kp, float ki, float kd, float max_output_permille);
+    float kp, float ki, float kd, float feedforward_permille_per_mm_s,
+    float max_output_permille);
 void WheelSpeedController_SetTargets(DualWheelSpeedController *controller,
     float motor_a_mm_s, float motor_b_mm_s);
 void WheelSpeedController_Update(DualWheelSpeedController *controller,

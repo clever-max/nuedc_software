@@ -1,7 +1,9 @@
 /**
- * Car project, MSPM0G3507 + AT8236 + dual MG513X GMR encoder motors.
- * User motor inputs: PA0=AIN1, PA1=AIN2, PA8=BIN1, PA9=BIN2.
- * Provisional encoder capture mapping: PB0/PB1=left A/B, PB2/PB3=right A/B.
+ * Car project, MSPM0G3507 + AT8236 + dual MG513X Hall encoder motors.
+ * User wiring: PA0/PA1/PA8/PA9 = AIN1/AIN2/BIN1/BIN2.
+ * Encoders: E1A/E1B/E2A/E2B = PA27/PA25/PB25/PB20.
+ * JY61S UART mode: UART2 PB15=TX/PB16=RX. UART0 PA10/PA11 remains debug.
+ * Passive buzzer PB27; PB1/PB2/PB3 are no longer used by the active IMU path.
  * PB21 is the board user button; motors stay at zero PWM until a deliberate press.
  * @cliArgs --device "MSPM0G350X" --package "LQFP-64(PM)" --part "Default"
  * @v2CliArgs --device "MSPM0G3507" --package "LQFP-64(PM)"
@@ -18,6 +20,9 @@ const TIMER = scripting.addModule("/ti/driverlib/TIMER", {}, false);
 const CONTROL_TIMER = TIMER.addInstance();
 const UART = scripting.addModule("/ti/driverlib/UART", {}, false);
 const DEBUG_UART = UART.addInstance();
+const JY61_UART = UART.addInstance();
+const I2C = scripting.addModule("/ti/driverlib/I2C", {}, false);
+const MPU_I2C = I2C.addInstance();
 const Board = scripting.addModule("/ti/driverlib/Board", {}, false);
 
 SYSCTL.forceDefaultClkConfig = true;
@@ -28,18 +33,34 @@ GPIO_ENCODERS.associatedPins[0].$name = "LEFT_ENCODER_A";
 GPIO_ENCODERS.associatedPins[0].direction = "INPUT";
 GPIO_ENCODERS.associatedPins[0].interruptEn = true;
 GPIO_ENCODERS.associatedPins[0].polarity = "RISE";
-GPIO_ENCODERS.associatedPins[0].pin.$assign = "PB0";
+GPIO_ENCODERS.associatedPins[0].pin.$assign = "PA27";
 GPIO_ENCODERS.associatedPins[1].$name = "LEFT_ENCODER_B";
 GPIO_ENCODERS.associatedPins[1].direction = "INPUT";
-GPIO_ENCODERS.associatedPins[1].pin.$assign = "PB1";
+GPIO_ENCODERS.associatedPins[1].pin.$assign = "PA25";
 GPIO_ENCODERS.associatedPins[2].$name = "RIGHT_ENCODER_A";
 GPIO_ENCODERS.associatedPins[2].direction = "INPUT";
 GPIO_ENCODERS.associatedPins[2].interruptEn = true;
 GPIO_ENCODERS.associatedPins[2].polarity = "RISE";
-GPIO_ENCODERS.associatedPins[2].pin.$assign = "PB2";
+GPIO_ENCODERS.associatedPins[2].pin.$assign = "PB25";
 GPIO_ENCODERS.associatedPins[3].$name = "RIGHT_ENCODER_B";
 GPIO_ENCODERS.associatedPins[3].direction = "INPUT";
-GPIO_ENCODERS.associatedPins[3].pin.$assign = "PB3";
+GPIO_ENCODERS.associatedPins[3].pin.$assign = "PB20";
+
+const GPIO_MPU = GPIO.addInstance();
+GPIO_MPU.$name = "MPU6050_INT";
+GPIO_MPU.associatedPins.create(1);
+GPIO_MPU.associatedPins[0].$name = "DATA_READY";
+GPIO_MPU.associatedPins[0].direction = "INPUT";
+GPIO_MPU.associatedPins[0].interruptEn = true;
+GPIO_MPU.associatedPins[0].polarity = "RISE";
+GPIO_MPU.associatedPins[0].pin.$assign = "PB1";
+
+const GPIO_BEEPER = GPIO.addInstance();
+GPIO_BEEPER.$name = "BEEPER";
+GPIO_BEEPER.associatedPins.create(1);
+GPIO_BEEPER.associatedPins[0].$name = "PASSIVE_BUZZER";
+GPIO_BEEPER.associatedPins[0].direction = "OUTPUT";
+GPIO_BEEPER.associatedPins[0].pin.$assign = "PB27";
 
 GPIO_BUTTONS.$name = "START_BUTTON";
 GPIO_BUTTONS.associatedPins[0].$name = "USER_BUTTON_B21";
@@ -47,7 +68,7 @@ GPIO_BUTTONS.associatedPins[0].direction = "INPUT";
 GPIO_BUTTONS.associatedPins[0].internalResistor = "PULL_UP";
 GPIO_BUTTONS.associatedPins[0].pin.$assign = "PB21";
 
-/* A bridge: TIMG8_C1 -> PA0/AIN1, TIMG8_C0 -> PA1/AIN2. */
+/* User motor inputs: TIMG8_C1 -> PA0/AIN1, TIMG8_C0 -> PA1/AIN2. */
 PWM_A.$name = "MOTOR_A_PWM";
 PWM_A.timerCount = 3200;
 PWM_A.clockPrescale = 1;
@@ -62,7 +83,7 @@ PWM_A.PWM_CHANNEL_0.dutyCycle = 0;
 PWM_A.PWM_CHANNEL_1.$name = "AIN1_PWM";
 PWM_A.PWM_CHANNEL_1.dutyCycle = 0;
 
-/* B bridge: TIMA0_C0 -> PA8/BIN1, TIMA0_C1 -> PA9/BIN2. */
+/* User motor inputs: TIMA0_C0 -> PA8/BIN1, TIMA0_C1 -> PA9/BIN2. */
 PWM_B.$name = "MOTOR_B_PWM";
 PWM_B.timerCount = 3200;
 PWM_B.clockPrescale = 1;
@@ -84,6 +105,18 @@ CONTROL_TIMER.timerStartTimer = true;
 CONTROL_TIMER.interrupts = ["ZERO"];
 CONTROL_TIMER.peripheral.$assign = "TIMG12";
 
+/* JY61S IIC mode exposes the internal MPU6050 raw bus: I2C1 PB2=SCL, PB3=SDA. */
+MPU_I2C.$name = "MPU6050_I2C";
+MPU_I2C.basicEnableController = true;
+MPU_I2C.basicControllerStandardBusSpeed = "Fast";
+MPU_I2C.peripheral.$assign = "I2C1";
+MPU_I2C.peripheral.sclPin.$assign = "PB2";
+MPU_I2C.peripheral.sdaPin.$assign = "PB3";
+MPU_I2C.sclPinConfig.enableConfig = true;
+MPU_I2C.sclPinConfig.internalResistor = "PULL_UP";
+MPU_I2C.sdaPinConfig.enableConfig = true;
+MPU_I2C.sdaPinConfig.internalResistor = "PULL_UP";
+
 /* Tianmengxing on-board CH340E debug UART: UART0 on PA10/PA11. */
 DEBUG_UART.$name = "DEBUG_UART";
 DEBUG_UART.enableFIFO = true;
@@ -94,3 +127,14 @@ DEBUG_UART.enabledInterrupts = ["RX"];
 DEBUG_UART.peripheral.$assign = "UART0";
 DEBUG_UART.peripheral.txPin.$assign = "PA10";
 DEBUG_UART.peripheral.rxPin.$assign = "PA11";
+
+/* JY61S UART output: PB15/UART2_TX -> sensor RX, PB16/UART2_RX <- sensor TX. */
+JY61_UART.$name = "JY61_UART";
+JY61_UART.enableFIFO = true;
+JY61_UART.rxFifoThreshold = "DL_UART_RX_FIFO_LEVEL_ONE_ENTRY";
+JY61_UART.txFifoThreshold = "DL_UART_TX_FIFO_LEVEL_3_4_EMPTY";
+JY61_UART.targetBaudRate = 115200;
+JY61_UART.enabledInterrupts = ["RX"];
+JY61_UART.peripheral.$assign = "UART2";
+JY61_UART.peripheral.txPin.$assign = "PB15";
+JY61_UART.peripheral.rxPin.$assign = "PB16";

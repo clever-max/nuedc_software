@@ -1,5 +1,7 @@
 #include "app/app.h"
+#include "ti_msp_dl_config.h"
 
+/* 主入口只负责调用应用层；外设初始化、任务调度和控制逻辑都放在模块中。 */
 int main(void)
 {
     App_Init();
@@ -8,15 +10,24 @@ int main(void)
 
 void GROUP1_IRQHandler(void)
 {
+    /* GPIOA/GPIOB 共用 Group1，中断源由编码器 BSP 读取并清除。 */
     App_OnEncoderInterrupt();
 }
 
 void DEBUG_UART_INST_IRQHandler(void)
 {
+    /* UART0 是电脑调试命令和遥测通道。 */
     App_OnUartInterrupt();
+}
+
+void JY61_UART_INST_IRQHandler(void)
+{
+    /* UART2 接收 JY61S 的 0x55 数据帧。 */
+    App_OnGyroUartInterrupt();
 }
 
 void CONTROL_TICK_INST_IRQHandler(void)
 {
+    /* 5 ms 定时器 ISR 只记账，耗时控制在前台循环中执行。 */
     App_OnControlTickInterrupt();
 }

@@ -1,6 +1,13 @@
 #include "ti_msp_dl_config.h"
 #include "encoder.h"
 
+#include <stdbool.h>
+
+/*
+ * MG513X Hall 编码器按用户资料取 13 PPR、1:28 减速比；当前只统计 A
+ * 相上升沿，并用 B 相电平判向，因此每个轮子先按 13*28=364 count/rev
+ * 换算。这个比例仍需用实测转一圈校准。
+ */
 #define WHEEL_DIAMETER_MM             (65.0f)
 #define GEAR_RATIO                     (28.0f)
 #define HALL_ENCODER_PPR               (13.0f)
@@ -29,6 +36,7 @@ static void unlockInterrupts(uint32_t primask)
 
 void BspEncoder_Reset(void)
 {
+    /* 启动新任务时同时清零累计位置和测速窗口历史。 */
     uint32_t primask = lockInterrupts();
     s_encoderA = 0;
     s_encoderB = 0;
@@ -56,6 +64,7 @@ void BspEncoder_UpdateMeasurements(float dt_s, int32_t *speedA,
     unlockInterrupts(primask);
 
     if (dt_s <= 0.0f) dt_s = DEFAULT_SAMPLE_PERIOD_S;
+    /* M 法测速：本窗口新增 count / dt，再换算为轮缘线速度。 */
     deltaA = countA - s_previousA;
     deltaB = countB - s_previousB;
     s_previousA = countA;
@@ -69,25 +78,25 @@ void BspEncoder_UpdateMeasurements(float dt_s, int32_t *speedA,
 
 void BspEncoder_IRQHandler(void)
 {
-    while (1) {
-        DL_GPIO_IIDX pending = DL_GPIO_getPendingInterrupt(ENCODERS_PORT);
-        if (pending == DL_GPIO_IIDX_NO_INTR) break;
+    /* ISR 只做最短路径：读取 A 中断、采样 B 判向、清除标志。 */
+    uint32_t pendingA = DL_GPIO_getEnabledInterruptStatus(GPIOA,
+        ENCODERS_LEFT_ENCODER_A_PIN);
+    uint32_t pendingB = DL_GPIO_getEnabledInterruptStatus(GPIOB,
+        ENCODERS_RIGHT_ENCODER_A_PIN | MPU6050_INT_DATA_READY_PIN);
 
-        switch (pending) {
-        case ENCODERS_LEFT_ENCODER_A_IIDX: {
-            bool bHigh = DL_GPIO_readPins(ENCODERS_PORT,
-                ENCODERS_LEFT_ENCODER_B_PIN) != 0U;
-            s_encoderA += (bHigh == (ENCODER_A_B_HIGH_IS_FORWARD != 0)) ? 1 : -1;
-            break;
-        }
-        case ENCODERS_RIGHT_ENCODER_A_IIDX: {
-            bool bHigh = DL_GPIO_readPins(ENCODERS_PORT,
-                ENCODERS_RIGHT_ENCODER_B_PIN) != 0U;
-            s_encoderB += (bHigh == (ENCODER_B_B_HIGH_IS_FORWARD != 0)) ? 1 : -1;
-            break;
-        }
-        default:
-            break;
-        }
+    if ((pendingA & ENCODERS_LEFT_ENCODER_A_PIN) != 0U) {
+        bool bHigh = DL_GPIO_readPins(GPIOA, ENCODERS_LEFT_ENCODER_B_PIN) != 0U;
+        s_encoderA += (bHigh == (ENCODER_A_B_HIGH_IS_FORWARD != 0)) ? 1 : -1;
     }
+    if ((pendingB & ENCODERS_RIGHT_ENCODER_A_PIN) != 0U) {
+        bool bHigh = DL_GPIO_readPins(GPIOB, ENCODERS_RIGHT_ENCODER_B_PIN) != 0U;
+        s_encoderB += (bHigh == (ENCODER_B_B_HIGH_IS_FORWARD != 0)) ? 1 : -1;
+    }
+
+    /* PB1 is wired to MPU6050 INT, but the current sensor driver polls I2C.
+     * Consume its GPIO edge here so it cannot retrigger GROUP1. */
+    if (pendingA != 0U)
+        DL_GPIO_clearInterruptStatus(GPIOA, pendingA);
+    if (pendingB != 0U)
+        DL_GPIO_clearInterruptStatus(GPIOB, pendingB);
 }
