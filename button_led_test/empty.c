@@ -4,15 +4,9 @@ int main(void)
 {
     SYSCFG_DL_init();
 
-    /* Tianmengxing onboard LED is connected to PB22 and is active-high. */
+    /* PB22 is the active-high onboard user LED. */
     DL_GPIO_setPins(GPIO_LEDS_PORT, GPIO_LEDS_USER_LED_1_PIN);
-
     while (1) {
-        /* B21 is active-low: pressed = PB21 reads 0. */
-        if (DL_GPIO_readPins(GPIO_BUTTONS_PORT, GPIO_BUTTONS_USER_BUTTON_B21_PIN) == 0) {
-            DL_GPIO_setPins(GPIO_LEDS_PORT, GPIO_LEDS_USER_LED_1_PIN);
-        } else {
-            DL_GPIO_clearPins(GPIO_LEDS_PORT, GPIO_LEDS_USER_LED_1_PIN);
-        }
+        /* 故意保持死循环，持续点亮 LED，不读取按键。 */
     }
 }
