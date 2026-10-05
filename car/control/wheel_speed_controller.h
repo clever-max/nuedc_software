@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+/* 所有任务的轮缘目标速度最终都不能超过此值。 */
+#define WHEEL_SPEED_MAX_MM_S (200.0f)
+
 typedef struct {
     float kp;
     float ki;
