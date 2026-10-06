@@ -69,3 +69,5 @@ UART1 参数为 115200-8-N-1，命令以换行结束：
 本目录中的 `car.hex` 是可直接烧录的 Intel HEX 固件镜像。源码检查、SysConfig 生成、编译、链接、烧录工具结果和实车串口观察必须分开记录；没有连接并观察小车时，不把构建成功写成硬件验证成功。
 
 详细说明见 [文档索引](docs/README.md)。
+
+使用 `powershell -ExecutionPolicy Bypass -File car/tools/build_validate_hex.ps1 -Clean` 重新生成 `car.hex`。脚本生成后强制执行 Intel HEX 校验和与 MSPM0 BSL 8 字节地址/长度对齐检查，校验失败时不报告构建完成。

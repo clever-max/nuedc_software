@@ -1,0 +1,15 @@
+name: Validate MSPM0 HEX images
+on:
+  push:
+  pull_request:
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate committed Intel HEX images
+        shell: pwsh
+        run: |
+          $hex = @(Get-ChildItem -Recurse -File -Filter *.hex | Where-Object { $_.FullName -notmatch '[\\/]Debug[\\/]' })
+          if ($hex.Count -eq 0) { throw "No HEX files found" }
+          python skills/mspm0-ccs/scripts/validate_hex.py $hex.FullName
