@@ -37,3 +37,7 @@ After changes, report separately whether source checks, SysConfig generation, co
 如果本地整理文档没有覆盖问题，再沿天猛星 Wiki 根路径检索相关子页面；不要默认引用同一站点的地猛星、地正星或其他 MSPM0 开发板内容。
 
 工作区共享的天猛星板级原理图、引脚图、TI 文档和 CCS/Keil 示例另见 `../docs/reference/Tianmengxing/INDEX.md`，可用 `rg` 检索其 `text/` 与 `examples/`。本工程硬件目标是 LP-MSPM0G3507，不能把天猛星排针接线直接套用到本工程。
+
+## 对话接续
+
+新对话先读取 `PROJECT_STATE.md`，再运行 `python ../tools/project_context.py show button_led_test`。完成一个阶段后，用同一工具更新状态并提交状态文件；通用规则见 `../docs/CONTINUATION_WORKFLOW.md`。

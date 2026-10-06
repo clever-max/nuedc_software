@@ -8,3 +8,7 @@
 - After `.syscfg` edits, run the shared `run_sysconfig.py` before rebuilding.
 - Report source checks, SysConfig generation, compilation, linking, and physical hardware validation separately.
 - For Tianmengxing board schematic, pin-map, TI documentation and CCS/Keil examples, use the workspace-wide `../docs/reference/Tianmengxing/INDEX.md`; search its `text/` and `examples/` folders with `rg`.
+
+## 对话接续
+
+新对话先读取 `PROJECT_STATE.md`，再运行 `python ../tools/project_context.py show breathing_led`。完成一个阶段后，用同一工具更新状态并提交状态文件；通用规则见 `../docs/CONTINUATION_WORKFLOW.md`。

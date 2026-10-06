@@ -16,7 +16,7 @@
 - 灰度总线：PA29=SCL、PA30=SDA（软件 I²C）。
 - MPU6050 预留：PB2/PB3 I²C，PB1 INT；当前固件未调用。
 - 蜂鸣器：PB27；B21：PB21。
-- 外置 CH340：PB4/UART1_TX、PB5/UART1_RX，115200-8-N-1；板载 UART0 PA10/PA11 不是当前控制台。
+- 板载 CH340E：PA10/UART0_TX、PA11/UART0_RX，115200-8-N-1。
 
 ## 当前软件行为
 
@@ -32,3 +32,7 @@
 不要从 Arduino/STM32 示例复制 PWM 频率、方向、电机供电、刹车/滑行方式或引脚。不要手工修改 SysConfig 生成文件和构建输出。修改 `.syscfg` 后先做静态检查和 SysConfig 生成，再构建。
 
 完成固件任务时，必须在本目录提供 Intel HEX 镜像，并分别报告源码检查、SysConfig、编译、链接、烧录工具和实车串口结果。
+
+## 对话接续
+
+新对话先读取 `PROJECT_STATE.md`，再运行 `python ../tools/project_context.py show car`。完成一个阶段后，用同一工具更新状态并提交状态文件；通用规则见 `../docs/CONTINUATION_WORKFLOW.md`。

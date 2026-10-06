@@ -33,3 +33,13 @@ python skills/mspm0-ccs/scripts/run_sysconfig.py .\photoresistor_uart --compiler
 ```
 
 修改 `.syscfg` 后先生成并检查，再进行编译。构建、烧录和实物验证必须分别记录；没有连接并观察板卡时，不把构建成功写成硬件验证成功。
+
+## Codex 对话接续
+
+每个独立工程都维护 `PROJECT_STATE.md`，新对话先运行：
+
+```powershell
+python tools/project_context.py show <project>
+```
+
+完整流程见 [docs/CONTINUATION_WORKFLOW.md](docs/CONTINUATION_WORKFLOW.md)。
