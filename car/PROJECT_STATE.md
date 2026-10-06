@@ -2,7 +2,7 @@
 
 - Project: `car`
 - Status: `experimental`
-- Last handoff: `2026-10-07 01:21 +0800`
+- Last handoff: `2026-10-07 01:23 +0800`
 - Stable tag: `car-stable-v1.0.0`
 - Stable commit: `9e0046c`
 - Release: `https://github.com/clever-max/nuedc_software/releases/tag/car-stable-v1.0.0`
@@ -18,7 +18,7 @@ LINE30 增加 TRACK/TURN_L/TURN_R/CROSS/LOST；NCHD12 bit0=右、bit11=左；连
 
 ## Validation
 
-源码静态检查通过；SysConfig未改动且现有配置通过；编译链接通过；car.hex与gray_line_30s_no_gyro.hex已生成并校验；未做实车验证
+源码静态检查通过；SysConfig未改动且现有配置通过；编译链接通过；HEX已生成并校验；未做实车验证
 
 ## Known issues
 
@@ -29,6 +29,8 @@ LINE30 增加 TRACK/TURN_L/TURN_R/CROSS/LOST；NCHD12 bit0=右、bit11=左；连
 先确认NCHD12通信，再架空采集line_mode，最后低速验证直角和十字
 
 ## Handoff log
+
+- `2026-10-07 01:23 +0800` — 补充特征防抖：普通线形会清零未完成的转弯候选计数 (commit `08997e3`, branch `codex/car-line-tracking-replica`).
 
 - `2026-10-07 01:21 +0800` — 完成灰度特征查表、转弯状态机和十字直行通过复刻 (commit `2cb569e`, branch `codex/car-line-tracking-replica`).
 
