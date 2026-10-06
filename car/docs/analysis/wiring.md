@@ -23,7 +23,7 @@ NCHD12 的 SCL 接 PA28，SDA 接 PA31，GND 共地。按资料，模块 VCC 使
 
 ## 串口和按键
 
-- UART1：PB4 为 MCU TX、PB5 为 MCU RX，连接外置 CH340，115200-8-N-1。
+- 板载 UART0：PA10 为 MCU TX、PA11 为 MCU RX，直接使用 Type-C 上的 CH340E，115200-8-N-1。
 - B21：PB21，上拉输入，低电平有效。
 - 蜂鸣器：PB27，GPIO 输出，启动为低电平。
 

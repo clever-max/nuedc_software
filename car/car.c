@@ -16,7 +16,7 @@ void GROUP1_IRQHandler(void)
 
 void DEBUG_UART_INST_IRQHandler(void)
 {
-    /* UART1 是外置 CH340 的电脑调试命令和遥测通道。 */
+    /* UART0 是天猛星板载 CH340E 的电脑调试命令和遥测通道。 */
     App_OnUartInterrupt();
 }
 

@@ -28,8 +28,8 @@
 | PB27 | 无源蜂鸣器 |
 
 左轮是 Motor A：AIN1/AIN2=PA0/PA1，编码器 E1A/E1B=PA27/PA25；右轮是 Motor B：BIN1/BIN2=PA8/PA9，编码器 E2A/E2B=PB25/PB20。NCHD12 使用 5V 供电，并将 V0 与 3V3 短接选择 3.3V 输出。先用开环固件确认两轮正方向。
-| PB4 / UART1_TX | CH340 RXD |
-| PB5 / UART1_RX | CH340 TXD |
+| PA10 / UART0_TX | 板载 CH340E RXD |
+| PA11 / UART0_RX | 板载 CH340E TXD |
 | PB2 / I2C1_SCL | MPU6050 SCL（当前未使用） |
 | PB3 / I2C1_SDA | MPU6050 SDA（当前未使用） |
 | PB1 | MPU6050 INT（当前未使用） |
@@ -38,7 +38,7 @@
 
 ## 串口操作
 
-UART1 参数为 115200-8-N-1，命令以换行结束：
+板载 UART0 参数为 115200-8-N-1，命令以换行结束：
 
 | 命令 | 当前行为 |
 | --- | --- |
@@ -54,7 +54,7 @@ UART1 参数为 115200-8-N-1，命令以换行结束：
 - `mission/`：30 秒灰度循迹状态机及目标速度生成。
 - `control/`：左右轮独立增量式速度控制器。
 - `bsp/`：电机 PWM、编码器、灰度传感器、蜂鸣器以及保留的 MPU6050/JY61S 驱动。
-- `protocol/`：UART1 命令解析和遥测输出。
+- `protocol/`：UART0 命令解析和遥测输出。
 - `targetConfigs/`：MSPM0G3507 的 CCS 目标配置。
 - `docs/`：项目事实、接线、调试和供应商资料索引。
 
