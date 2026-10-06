@@ -482,10 +482,14 @@ void DemoMission_Update(uint32_t now_tick, float dt_s,
                 if (confirmLineFeature(feature))
                     setLineMode(feature, now_tick);
             } else if (feature == DEMO_LINE_TRACK) {
+                s_line_candidate = DEMO_LINE_TRACK;
+                s_line_candidate_count = 0U;
                 if (s_line_mode != DEMO_LINE_TRACK)
                     setLineMode(DEMO_LINE_TRACK, now_tick);
                 updateReferenceLineOutput(dt_s, line_error, line_valid);
             } else {
+                s_line_candidate = DEMO_LINE_LOST;
+                s_line_candidate_count = 0U;
                 if (s_line_mode != DEMO_LINE_LOST)
                     setLineMode(DEMO_LINE_LOST, now_tick);
                 BspMotor_Coast();
