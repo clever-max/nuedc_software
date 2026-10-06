@@ -114,7 +114,7 @@ def write_report(root: Path, output: Path) -> None:
         "## Known high-confidence actions",
         "",
         "- The duplicate NCHD1 manual PDF and extracted-text filename have been removed; the ASCII-named canonical pair remains.",
-        "- The NCHD12 MSPM0G3507 example under `sensors/NCHD1_I2C/` duplicates the filtered snapshot under `sensors/examples/nchd12_mspm0g3507/` for many source/configuration files. Keep the filtered searchable snapshot as the canonical example and review the larger archive before deletion.",
+        "- The duplicate NCHD12 MSPM0G3507 source/configuration files listed in the prior report were removed from `sensors/NCHD1_I2C/`; the filtered snapshot under `sensors/examples/nchd12_mspm0g3507/` is canonical.",
         "- Repeated Tianmengxing example startup files, linker scripts, and README templates are usually intentional per-example snapshots; do not delete them solely because their hashes match.",
         "- LP-MSPM0G3507 ODB/manufacturing outputs contain many repeated generated files; treat each production package as a unit and do not delete individual files from it.",
         "",
