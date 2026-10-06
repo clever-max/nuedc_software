@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-/* 所有任务的轮缘目标速度最终都不能超过此值。 */
-#define WHEEL_SPEED_MAX_MM_S (200.0f)
+/* 高速循迹验证档：轮缘目标速度上限为 320 mm/s。 */
+#define WHEEL_SPEED_MAX_MM_S (320.0f)
 
 typedef struct {
     float kp;
