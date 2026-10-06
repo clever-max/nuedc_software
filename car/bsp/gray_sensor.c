@@ -6,10 +6,10 @@
 
 /*
  * NCHD12 使用 PCA9555 兼容寄存器返回 12 路输入。样例工程的 PA0/PA1
- * 已分配给电机 PWM，所以这里用 PA28/PA31 软件模拟一条独立 I2C 总线。
+ * 已分配给电机 PWM，所以这里用 PA29/PA30 软件模拟一条独立 I2C 总线。
  */
 /* The NCHD12 sample uses a PCA9555-compatible 12-bit input image.  PA0/PA1
- * are occupied by motor PWM in this project, so the reserved PA28/PA31 pair
+ * are occupied by motor PWM in this project, so the reserved PA29/PA30 pair
  * is used for a software I2C bus. */
 #define GRAY_SCL_PIN             (GRAY_SENSOR_BUS_GRAY_SCL_PIN)
 #define GRAY_SDA_PIN             (GRAY_SENSOR_BUS_GRAY_SDA_PIN)

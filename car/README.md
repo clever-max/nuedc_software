@@ -22,8 +22,8 @@
 | PA25 | 左编码器 E1B |
 | PB25（上升沿中断） | 右编码器 E2A |
 | PB20 | 右编码器 E2B |
-| PA28 | NCHD12 SCL（软件 I²C） |
-| PA31 | NCHD12 SDA（软件 I²C） |
+| PA29 | NCHD12 SCL（软件 I²C） |
+| PA30 | NCHD12 SDA（软件 I²C） |
 | PB21 | B21 启动/停止按键，低电平有效 |
 | PB27 | 无源蜂鸣器 |
 

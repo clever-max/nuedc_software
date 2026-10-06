@@ -68,7 +68,7 @@ GPIO4.$name                         = "BEEPER";
 GPIO4.associatedPins[0].$name       = "PASSIVE_BUZZER";
 GPIO4.associatedPins[0].pin.$assign = "PB27";
 
-/* PA28/PA31 are reserved for the NCHD1/NCHD12 software-I2C gray sensor.
+/* PA29/PA30 are reserved for the NCHD1/NCHD12 software-I2C gray sensor.
  * The driver changes these two pins between released-input and driven-low
  * states to emulate an open-drain bus.  They start released with pull-ups. */
 GPIO5.$name                              = "GRAY_SENSOR_BUS";
@@ -76,11 +76,11 @@ GPIO5.associatedPins.create(2);
 GPIO5.associatedPins[0].$name            = "GRAY_SCL";
 GPIO5.associatedPins[0].direction        = "INPUT";
 GPIO5.associatedPins[0].internalResistor = "PULL_UP";
-GPIO5.associatedPins[0].pin.$assign      = "PA28";
+GPIO5.associatedPins[0].pin.$assign      = "PA29";
 GPIO5.associatedPins[1].$name            = "GRAY_SDA";
 GPIO5.associatedPins[1].direction        = "INPUT";
 GPIO5.associatedPins[1].internalResistor = "PULL_UP";
-GPIO5.associatedPins[1].pin.$assign      = "PA31";
+GPIO5.associatedPins[1].pin.$assign      = "PA30";
 
 I2C1.$name                             = "MPU6050_I2C";
 I2C1.basicEnableController             = true;

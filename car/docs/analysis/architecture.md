@@ -6,7 +6,7 @@
 car.c
   -> app/app.c                 初始化、按键/串口、5 ms 调度
        -> bsp/encoder.c        A 相上升沿计数，计算左右轮速度
-       -> bsp/gray_sensor.c    PA28/PA31 软件 I²C 读取 NCHD12
+       -> bsp/gray_sensor.c    PA29/PA30 软件 I²C 读取 NCHD12
        -> mission/demo_mission.c 30 秒灰度循迹状态机
             -> control/wheel_speed_controller.c  左右轮速度 PID
             -> bsp/motor_pwm.c  输出 AT8236 四路 PWM
