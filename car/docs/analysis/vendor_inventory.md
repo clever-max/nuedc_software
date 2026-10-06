@@ -1,21 +1,13 @@
-# Vendor package inventory
+# 供应商资料清单
 
-Source supplied by user: the WHEELTEC AT8236 driver-module package labeled V2.8, dated 2026-07-25. The material below was copied into this project for offline review. Relative paths are from this file.
+用户提供的 WHEELTEC AT8236 资料包及其更新记录已复制到 `vendor/`，本清单中的路径均相对于当前文件。
 
-## Copied reference assets
+## 主要内容
 
-- `../vendor/版权声明.pdf`
-- `../vendor/资料更新记录.txt`
-- User guide/tutorial folder: AT8236 D157B manual dated 2025-08-27; D157B diagnostics PDF dated 2025-07-10; encoder troubleshooting text and image.
-- Encoder folder: waveform/orientation image and STM32F1 and Arduino UNO example ZIPs.
-- Source examples: D107A STM32 archive, D157B STM32 standard-library and HAL archives (Hall and GMR encoder variants), STM32 wiring image, Arduino source and Arduino archive.
-- Schematics: D107A schematic dated 2024-12-06 and D157B regulated-module schematic.
-- Chip datasheets: AT8236, RT8279 and RT9013-33GB.
+- `vendor/1.用户手册与教程视频/`：D157B 手册、排查资料和编码器测试说明。
+- `vendor/2.编码器的使用教程与测速原理/`：波形图片及 STM32/Arduino 示例压缩包。
+- `vendor/4.例程源码/`：Arduino、STM32 例程和接线图片。
+- `vendor/5.原理图/`：D107A、D157B 原理图。
+- `vendor/6.芯片手册/`：AT8236、RT8279、RT9013-33GB 数据手册。
 
-## Not duplicated
-
-The original package also contains large tutorial videos (including a roughly 1.3 GB D157B tutorial video and a DC motor tutorial video) and a STEP 3D model. These are not copied into the project. They remain available in the user's supplied source package; see the package update log and folder map there. The contacts PDF, encapsulation usage text and D157B JSON footprint are likewise not duplicated because they are not needed to review the current pin mapping or driver behavior.
-
-## Integrity and portability
-
-The archived ZIPs are retained intact. Example contents target Arduino or STM32. This index intentionally avoids embedding the machine-specific source drive path so the project can move with the workspace. If the source package is moved later, the copied review assets in this folder remain available.
+大型教程视频和部分三维模型未复制到工程。供应商示例面向其他 MCU，不能替代当前 `car.syscfg`。资料中的版本日期以各文件名和 `资料更新记录.txt` 为准。

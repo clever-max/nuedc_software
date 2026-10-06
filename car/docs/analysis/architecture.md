@@ -1,44 +1,44 @@
-# Current closed-loop route architecture
+# 当前运行架构
+
+## 调用关系
 
 ```text
 car.c
-  -> app/app.c (timer schedule, button/UART dispatch, sensor update)
-       -> mission/demo_mission.c (15 s gray line-following PID state)
-       -> control/wheel_speed_controller.c (independent A/B incremental PID)
-       -> bsp/encoder.c (signed A-edge counts and mm/s conversion)
-       -> bsp/mpu6050.c (raw MPU6050 I2C1 driver, bias calibration and yaw integration)
-       -> bsp/gray_sensor.c (NCHD12/PCA9555-compatible software I2C on PA28/PA31)
-       -> bsp/buzzer.c (PB27 start/stop notification)
-       -> bsp/motor_pwm.c (AT8236 signed PWM and Motor-B polarity mapping)
-       -> SysConfig generated DriverLib layer
+  -> app/app.c                 初始化、按键/串口、5 ms 调度
+       -> bsp/encoder.c        A 相上升沿计数，计算左右轮速度
+       -> bsp/gray_sensor.c    PA28/PA31 软件 I²C 读取 NCHD12
+       -> mission/demo_mission.c 30 秒灰度循迹状态机
+            -> control/wheel_speed_controller.c  左右轮速度 PID
+            -> bsp/motor_pwm.c  输出 AT8236 四路 PWM
+       -> protocol/serial_console.c  UART1 命令与遥测
+       -> bsp/buzzer.c          PB27 提示音
 ```
 
-## Control cycle
+`bsp/mpu6050.c` 和 `bsp/jy61s_uart.c` 是保留驱动，目前 `app.c` 不调用它们。
 
-Every 5 ms the timer ISR increments a pending-tick counter. The foreground consumes pending ticks and:
+## 5 ms 控制周期
 
-1. Copies encoder counts and converts each wheel delta to mm/s.
-2. Reads the 12-channel gray bit map and converts it to a line-position error.
-3. Computes a gray P/D correction and updates independent wheel speed PID outputs.
-4. Reads the MPU6050 Z-axis rate, removes the startup bias, filters it and integrates yaw.
-5. Writes signed PWM to the AT8236 bridge and updates the PB27 buzzer state.
+1. 定时器中断只累计待处理 tick；前台取出 tick 后计算本周期 `dt`。
+2. 读取左右编码器计数，换算为 mm/s。
+3. 读取 12 位灰度位图，得到线路位置误差。
+4. 灰度 P/D 环生成左右轮目标速度，目标统一限幅到 ±200 mm/s。
+5. 左右轮速度控制器根据实测速度计算 PWM，写入 AT8236。
+6. 更新蜂鸣器和约 10 Hz 遥测。
 
-Encoder interrupts do only count A-channel rising edges and sample B for direction. The MPU6050 is initialized at I2C address `0x68`; its gyro stream is bias-calibrated while the chassis is stationary. A failed WHO_AM_I or I2C read marks the gyro unavailable and prevents route start.
+编码器中断只做计数和 B 相采样。任务空闲、完成或中止时持续写入滑行停止，避免外设复位后的残留输出。
 
-## Route states
+## 状态机
 
-The active demo starts in `CURVE_1`, follows gray position at a reduced curve speed until the first approximately 170° yaw change, runs `STRAIGHT_TRACK` at 200 mm/s until a sustained yaw rate indicates the next bend, then stops after `CURVE_2` reaches the same angle. A `STOP` command or second B21 press enters `ABORTED` and coasts.
+- `IDLE`：等待 B21、`RUNPID` 或 `RUN15`。
+- `LINE30`：灰度循迹 30 秒，基础速度 200 mm/s。
+- `DONE`：时间到，速度控制器复位并滑行停止。
+- `ABORT`：收到 `STOP` 或再次按键后停止。
 
-The sign `RIGHT_TURN_YAW_SIGN` is `-1` for the standard MPU6050 Z-axis convention used here. If a physical right turn changes yaw in the opposite sign, change that one constant after checking telemetry.
+## 当前参数
 
-## Parameters and limits
+- 控制周期：5 ms；路线时限：900 s。
+- 轮速 PID 初值：`Kp=1.50`、`Ki=0`、`Kd=0.01`，前馈为 0，输出限幅 ±1000‰。
+- 灰度环初值：`Kp=4.0`、`Ki=0`、`Kd=0.02`，修正限幅 ±60 mm/s。
+- 编码器：13 PPR、1:28、单路 A 上升沿，初始 364 count/轮；需实测校准。
 
-- Wheel target: 200 mm/s.
-- Initial speed PID: `Kp=1.50`, `Ki=0`, `Kd=0.01`, output limit ±1000‰. This follows the mature sample's incremental speed PID structure; tune only after encoder polarity and count scale are verified.
-- Safety limit: every wheel target is clamped to ±200 mm/s inside `wheel_speed_controller`, after gray correction and before the speed PID.
-- MPU6050: I2C1 PB2=SCL, PB3=SDA, PB1=INT, 7-bit address `0x68`, ±250 dps, 200 Hz sample configuration, 100-sample startup bias and first-order rate filter.
-- Track transitions: 170° target per bend, 8°/s entry threshold, 150 ms confirmation and 1 s minimum straight interval.
-- Hall encoder scale: 13 PPR × 28 gearbox, one A rising edge per motor revolution cycle, 65 mm wheel; verify with one measured wheel revolution.
-- Gray sensor: PA28=SCL, PA31=SDA, PCA9555-compatible 7-bit address `0x20`.
-
-The PID values and heading gains are starting values, not physical calibration. Use the UART fields `state`, `gyro`, `yaw`, `target_yaw`, `speed` and `pwm_permille` to tune them safely.
+这些值是调试起点，不能视为已完成的实车标定。

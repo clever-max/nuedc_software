@@ -1,56 +1,34 @@
-# Current user wiring and project mapping
+# 当前接线与配置对应表
 
-## Motor driver inputs
+本文档以 `../../car.syscfg` 和当前 BSP 为准。
 
-| MCU pin / timer | AT8236 signal |
-| --- | --- |
-| PA0 / TIMG8_C1 | AIN1 |
-| PA1 / TIMG8_C0 | AIN2 |
-| PA8 / TIMA0_C0 | BIN1 |
-| PA9 / TIMA0_C1 | BIN2 |
+## 电机与编码器
 
-These are the four AT8236 logic inputs. The 12 V motor supply, motor outputs and common ground remain on the AT8236 side. Do not confuse AIN/BIN with the AOUT/BOUT motor terminals.
-
-## Hall encoder inputs
-
-| Motor signal | MCU pin | Mode |
+| MCU | 外设/模式 | 外部信号 |
 | --- | --- | --- |
-| E1A | PA27 | GPIO interrupt, A rising edge |
-| E1B | PA25 | GPIO input, direction sample |
-| E2A | PB25 | GPIO interrupt, A rising edge |
-| E2B | PB20 | GPIO input, direction sample |
+| PA0 | TIMG8_C1 | AIN1 |
+| PA1 | TIMG8_C0 | AIN2 |
+| PA8 | TIMA0_C0 | BIN1 |
+| PA9 | TIMA0_C1 | BIN2 |
+| PA27 | GPIO 上升沿中断 | 左 E1A |
+| PA25 | GPIO 输入 | 左 E1B |
+| PB25 | GPIO 上升沿中断 | 右 E2A |
+| PB20 | GPIO 输入 | 右 E2B |
 
-The current encoder code uses one A rising edge per encoder PPR cycle and samples B. With the user-provided 13 PPR, 1:28 gear ratio and 65 mm wheel, the initial estimate is 364 counts per wheel revolution. Verify this scale mechanically before treating speed as calibrated.
+编码器代码统计 A 相上升沿并读取 B 相判向。按 13 PPR、1:28 先估算 364 count/轮；实际使用前要让车轮转一整圈核对计数。
 
-## MPU6050（I²C 模式）
+## 灰度传感器
 
-| MPU6050 signal | MCU pin | Function |
-| --- | --- | --- |
-| SCL | PB2 | I2C1_SCL |
-| SDA | PB3 | I2C1_SDA |
-| INT | PB1 | GPIO input, reserved data-ready edge |
+NCHD12 的 SCL 接 PA28，SDA 接 PA31，电源使用 3.3 V 档并共地。驱动按 PCA9555 兼容器件读取 7 位地址 `0x20`（写 `0x40`、读 `0x41`），从寄存器 `0x00` 读取两个字节，低 12 位为通道状态。PA0/PA1 已分配给电机 PWM，不能照搬旧示例作为软件 I²C。
 
-The active driver uses the raw MPU6050 7-bit address `0x68`, configures ±250 dps and samples the Z-axis gyro through I2C1. It removes a 100-sample static bias and applies a first-order rate filter before integrating yaw. The external CH340 debug console is UART1: PB4=TX and PB5=RX. Keep the car still after reset until the bias calibration has completed.
+## 串口和按键
 
-## Buzzer
+- UART1：PB4 为 MCU TX、PB5 为 MCU RX，连接外置 CH340，115200-8-N-1。
+- B21：PB21，上拉输入，低电平有效。
+- 蜂鸣器：PB27，GPIO 输出，启动为低电平。
 
-The passive buzzer signal is on PB27. The pin is configured as a GPIO output and starts low. The active demo toggles it at a low audible rate for start/stop notification; do not drive a high-current buzzer directly from the MCU pin.
+## 预留传感器
 
-## Gray sensor reservation
+PB2/PB3/PB1 分别为 MPU6050 的 I2C1 SCL/SDA/INT；`car.syscfg` 保留配置，但当前 `app.c` 不初始化或读取 MPU6050。UART2 PB15/PB16 只服务于保留的 JY61S 驱动，同样未接入当前任务。
 
-The current user arrangement uses PA28/PA31 as a software I2C bus for the NCHD1/NCHD12 gray sensor. These pins are reserved as `GRAY_SENSOR_BUS` in SysConfig and are dynamically switched by `bsp/gray_sensor.c` to emulate open-drain I2C. Do not use PA0/PA1 for gray I2C because they are motor PWM. See the shared sensor index at `../../../docs/reference/sensors/INDEX.md`.
-
-## NCHD12 12-channel grayscale sensor
-
-| NCHD12 signal | MCU pin | Function |
-| --- | --- | --- |
-| SCL | PA28 | software I2C clock |
-| SDA | PA31 | software I2C data |
-| VCC | 3.3V output setting | MSPM0-safe logic level |
-| GND | GND | common ground |
-
-The PCA9555-compatible device is read at write/read addresses `0x40/0x41` (7-bit `0x20`). The input register starts at `0x00`; the lower 12 bits are the sensor state.
-
-## Board configuration source
-
-The active mapping is in `../../car.syscfg`. Generated headers under `Debug/` are inspection outputs only. The Tianmengxing pin map and schematic are indexed at `../../../docs/reference/Tianmengxing/INDEX.md`.
+供应商示例中的 STM32/Arduino 引脚、PWM 频率和电平假设不属于本项目配置。

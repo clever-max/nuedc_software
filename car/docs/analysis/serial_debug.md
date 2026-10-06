@@ -1,40 +1,41 @@
-# Closed-loop right-turn route UART operation
+# 串口调试指南
 
-Open the external CH340 UART1 connection at 115200 baud, 8 data bits, no parity, one stop bit. Wire CH340 TXD to PB5 (UART1_RX), CH340 RXD to PB4 (UART1_TX), and share GND. Send commands with a newline.
+## 连接
 
-| Command | Behavior |
+使用外置 CH340：CH340 TXD 接 PB5（UART1_RX），CH340 RXD 接 PB4（UART1_TX），两端共地。串口参数为 115200、8 数据位、无校验、1 停止位。命令以换行结束。
+
+## 命令
+
+| 命令 | 作用 |
 | --- | --- |
-| `RUN15` | Starts the MPU6050 curve-straight-curve route after I²C initialization succeeds. |
-| `STOP` | Requests a coast stop and enters `ABORT`. |
+| `RUNPID` | 启动 30 秒灰度循迹（名称保留自早期方案） |
+| `RUN15` | 与 `RUNPID` 相同，当前并不代表 15 秒路线 |
+| `STOP` | 请求停止，进入 `ABORT` |
 
-B21 has the same start/stop behavior. Keep the chassis stationary after reset for MPU6050 bias calibration. The route is:
+B21 与启动命令共用同一状态机。任务运行中再次启动会返回 `ERR busy`。
 
-```text
-CURVE_1    approximately 170° yaw change
-STRAIGHT_TRACK  until the next sustained bend
-CURVE_2    approximately 170° yaw change, then stop
-```
+## 启动和遥测
 
-如果 MPU6050 未安装、I²C 地址 `0x68` 无应答或零偏校准未完成，遥测会显示 `gyro=ERR`，`RUN15` 和 B21 会被拒绝，PWM 保持 `0/0`；这是闭环路线的安全条件，不是电机故障。外置 CH340 使用 UART1 PB4/PB5。
-
-Telemetry is printed at about 10 Hz:
+正常启动横幅应包含：
 
 ```text
-ms=1200 state=CURVE gyro=OK backend=MPU6050 yaw=12.4 target_yaw=170.0 yaw_rate=34.2 turn_err=157.6 speed=108/112 pwm_permille=220/218
+MPU6050 disabled; encoder speed PID active
 ```
 
-Fields:
+遥测约每 100 ms 输出一行，例如：
 
-- `state`: `IDLE`, `CURVE`, `STRAIGHT`, `DONE` or `ABORT`.
-- `gyro`: MPU6050 I²C initialization and zero-bias calibration status.
-- `backend`: `MPU6050` when the active sensor path is selected.
-- `yaw`: integrated Z-axis yaw in degrees.
-- `target_yaw`: heading held during the current straight segment or turn endpoint.
-- `yaw_rate`: filtered gyro-Z rate in degrees per second; the sign is useful for checking the right-turn convention.
-- `turn_err`: signed remaining right-turn angle in degrees; it is zero outside a turn.
-- `speed`: encoder-derived wheel speeds in mm/s (A/B).
-- `pwm_permille`: signed PID commands for the two motors.
+```text
+ms=1200 state=LINE30 gyro=OFF backend=MPU6050-ERR line=0.0(OK) gray=0x00FF yaw=0.0 target_yaw=0.0 yaw_rate=0.0 turn_err=0.0 speed=108/112 pwm_permille=220/218
+```
 
-If `gyro=ERR`, `RUN15` is rejected. The first bend determines the signed yaw direction automatically. A second bend is accepted after the straight interval when the same signed yaw rate remains above 8°/s for 150 ms.
+字段含义：
 
-Initial controller values are deliberately marked as tuning values in the source: curve target 110 mm/s, straight target 200 mm/s, wheel `Kp=0.50`, `Ki=0.20`, `Kd=0`, feed-forward 1.0 permille per mm/s, and line `Kp=8.0`, `Kd=0.05`. Tune only after confirming encoder count scale, gyro sign, motor direction and UART telemetry.
+- `state`：`IDLE`、`LINE30`、`DONE` 或 `ABORT`。
+- `gyro`：当前应为 `OFF`；不是 MPU6050 已通过检测的证明。
+- `line`：灰度位置误差及有效标志。
+- `gray`：12 路灰度位图。
+- `speed`：左右轮估算速度，单位 mm/s。
+- `pwm_permille`：左右电机的有符号 PWM 千分比。
+- `yaw`、`target_yaw`、`yaw_rate`、`turn_err`：当前版本不使用，通常为 0。
+
+先架空车轮核对正负方向，再进行落地循迹。没有实际串口记录时，不把源码中的参数写成实车性能结论。

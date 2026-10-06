@@ -1,9 +1,5 @@
-The 'targetConfigs' folder contains target-configuration (.ccxml) files, automatically generated based
-on the device and connection settings specified in your project on the Properties > General page.
+# targetConfigs 说明
 
-Please note that in automatic target-configuration management, changes to the project's device and/or
-connection settings will either modify an existing or generate a new target-configuration file. Thus,
-if you manually edit these auto-generated files, you may need to re-apply your changes. Alternatively,
-you may create your own target-configuration file for this project and manage it manually. You can
-always switch back to automatic target-configuration management by checking the "Manage the project's
-target-configuration automatically" checkbox on the project's Properties > General page.
+此目录包含 CCS 根据器件和连接设置生成的目标配置文件。当前项目目标配置为 `MSPM0G3507.ccxml`。
+
+一般应通过 CCS 项目属性或项目工具管理器修改器件和调试连接，不要手工改动自动生成的 `.ccxml`。如果切换器件或调试探针，应同时核对项目元数据和实际硬件。

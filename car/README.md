@@ -1,41 +1,71 @@
-# Car closed-loop track validation (AT8236 + MPU6050)
+# car 小车闭环验证项目
 
-## Current motor, encoder, MPU6050, gray sensor and buzzer wiring
+## 当前结论（以源码和 SysConfig 为准）
 
-| MCU pin / peripheral | AT8236 / sensor signal |
+当前固件入口是 `car.c`，配置源是 `car.syscfg`。已实现并由启动信息确认的运行模式是：
+
+- 上电后所有电机输入保持低电平，电机处于滑行停止状态。
+- 按 B21，或在外置 CH340 串口发送 `RUNPID`/`RUN15`，启动 30 秒灰度循迹。
+- 每 5 ms 读取编码器和 12 路灰度传感器，灰度位置环修正左右轮目标速度，编码器速度环输出 AT8236 PWM。
+- 30 秒到时进入 `DONE` 并滑行停止；运行中再次按 B21 或发送 `STOP` 进入 `ABORT`。
+- 当前版本不初始化、不读取 MPU6050；遥测中的 `gyro=OFF` 是预期状态。`MPU6050` 驱动文件保留作后续实验，不能据此宣称已完成陀螺仪路线。
+
+## 实际接线
+
+| MSPM0G3507 引脚/外设 | 信号 |
 | --- | --- |
-| PA0 / TIMG8_C1 | AIN1 |
-| PA1 / TIMG8_C0 | AIN2 |
-| PA8 / TIMA0_C0 | BIN1 |
-| PA9 / TIMA0_C1 | BIN2 |
-| PA27 encoder interrupt | E1A |
-| PA25 encoder input | E1B |
-| PB25 encoder interrupt | E2A |
-| PB20 encoder input | E2B |
-| PB2 / I2C1_SCL | MPU6050 SCL |
-| PB3 / I2C1_SDA | MPU6050 SDA |
-| PB1 GPIO interrupt | MPU6050 INT |
-| PA28 | NCHD12 SCL (software I2C) |
-| PA31 | NCHD12 SDA (software I2C) |
-| PB27 GPIO | passive buzzer |
+| PA0 / TIMG8_C1 | AT8236 AIN1 |
+| PA1 / TIMG8_C0 | AT8236 AIN2 |
+| PA8 / TIMA0_C0 | AT8236 BIN1 |
+| PA9 / TIMA0_C1 | AT8236 BIN2 |
+| PA27（上升沿中断） | 左编码器 E1A |
+| PA25 | 左编码器 E1B |
+| PB25（上升沿中断） | 右编码器 E2A |
+| PB20 | 右编码器 E2B |
+| PA28 | NCHD12 SCL（软件 I²C） |
+| PA31 | NCHD12 SDA（软件 I²C） |
+| PB21 | B21 启动/停止按键，低电平有效 |
+| PB27 | 无源蜂鸣器 |
+| PB4 / UART1_TX | CH340 RXD |
+| PB5 / UART1_RX | CH340 TXD |
+| PB2 / I2C1_SCL | MPU6050 SCL（当前未使用） |
+| PB3 / I2C1_SDA | MPU6050 SDA（当前未使用） |
+| PB1 | MPU6050 INT（当前未使用） |
 
-The current project no longer uses H8 for motor PWM. AT8236 logic inputs must be wired directly to the four PA PWM pins above, with common ground. The active attitude source is the raw MPU6050 on I2C1 at address `0x68`; keep the chassis still during startup bias calibration. The external CH340 debug port is UART1: CH340 TXD→PB5/RX and CH340 RXD→PB4/TX. See [MPU6050 notes](docs/analysis/MPU6050_notes.md).
+电机逻辑输入必须直接接上表四个 PWM 引脚并共地。不要把旧教程中的 H8 引脚或 Arduino/STM32 引脚表套用到本项目。
 
-## Demo behavior
+## 串口操作
 
-The active mission is an encoder-PID plus 12-channel gray-position line-following route. Press B21 or send `RUNPID`/`RUN15` over UART1 to start the first curve immediately, follow the straight, detect the second curve and stop after the second approximately 170° heading change. The MPU6050 must pass startup calibration. Press B21 again or send `STOP` to abort. UART1 is 115200-8-N-1; telemetry is about 10 Hz.
+UART1 参数为 115200-8-N-1，命令以换行结束：
 
-The user reports that the left-wheel forward direction is correct. The BSP inverts Motor B's electrical polarity so positive speed targets mean physical forward for both wheels. The route uses gray position correction in all three track sections and MPU6050 Z-axis angle only for section transitions and stopping.
+| 命令 | 当前行为 |
+| --- | --- |
+| `RUNPID`、`RUN15` | 启动 30 秒灰度循迹；任务运行中返回 `ERR busy` |
+| `STOP` | 请求停止并进入 `ABORT` |
+| 其他 | 返回命令提示 |
 
-## Project baseline
+遥测约每 100 ms 一行，字段包括 `state`、`gyro`、`line`、`gray`、`speed` 和 `pwm_permille`。当前正常启动横幅包含 `MPU6050 disabled` 与 `gray line 30s`。
 
-- CCS Theia project based on the workspace MSPM0G3507 starter.
-- Device MSPM0G3507, TI Arm Clang, MSPM0 SDK 2.11.0.07.
-- SysConfig source: `car.syscfg`; entry point: `car.c`.
-- Project modules: `app/` (scheduler), `mission/` (track state machine), `protocol/` (UART console), `bsp/` (motor/encoder/gray/MPU6050/buzzer), `control/` (twin wheel incremental PID).
-- PID starting values are conservative commissioning placeholders and must be tuned from telemetry; they are not a completed physical calibration.
-- User-supplied wheel diameter: 65 mm. The user confirms 1:28 gearing and 12 V motor voltage, and specifies Hall encoder 13 PPR. The active route uses the encoder estimate documented in [MG513X Hall notes](docs/analysis/MG513X_Hall_notes.md).
+## 工程结构
 
-See [docs/README.md](docs/README.md) for source documents and [docs/analysis/serial_debug.md](docs/analysis/serial_debug.md) for serial operation. The earlier PID trace is retained as historical calibration evidence, not the current firmware behavior.
+- `app/`：初始化、5 ms 调度、按键和串口命令分发。
+- `mission/`：30 秒灰度循迹状态机及目标速度生成。
+- `control/`：左右轮独立增量式速度控制器。
+- `bsp/`：电机 PWM、编码器、灰度传感器、蜂鸣器以及保留的 MPU6050/JY61S 驱动。
+- `protocol/`：UART1 命令解析和遥测输出。
+- `targetConfigs/`：MSPM0G3507 的 CCS 目标配置。
+- `docs/`：项目事实、接线、调试和供应商资料索引。
 
-The old open-loop turn-forward-reverse tutorial is retained as [historical documentation](docs/analysis/write_this_drive_sequence.md); it is not the active route.
+## 当前参数和边界
+
+- 轮径 65 mm，电机为 MG513X 霍尔编码器，用户提供 13 PPR、1:28 减速比。
+- 固件按 A 相上升沿计数、B 相判向，初始按 364 count/轮估算；必须通过实测一圈校准后再把速度当作标定值。
+- 灰度位置环初值为 `Kp=4.0`、`Kd=0.02`，修正限幅 ±60 mm/s；基础目标速度为 200 mm/s。
+- 左轮正方向由用户确认；Motor B 在 BSP 中做电气方向反相，使正速度命令代表两轮物理前进。
+- PID 参数、编码器电平兼容性和电机方向尚未完成实车标定。
+
+## 构建与验证记录
+
+本目录中的 `car.hex` 是可直接烧录的 Intel HEX 固件镜像。源码检查、SysConfig 生成、编译、链接、烧录工具结果和实车串口观察必须分开记录；没有连接并观察小车时，不把构建成功写成硬件验证成功。
+
+详细说明见 [文档索引](docs/README.md)。
