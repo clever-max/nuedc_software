@@ -16,11 +16,19 @@
 #define ENCODER_A_B_HIGH_IS_FORWARD     (1)
 #define ENCODER_B_B_HIGH_IS_FORWARD     (1)
 #define DEFAULT_SAMPLE_PERIOD_S        (0.005f)
+#define SPEED_MEASURE_WINDOW_S         (0.020f)
+#define SPEED_FILTER_ALPHA             (0.70f)
 
 static volatile int32_t s_encoderA = 0;
 static volatile int32_t s_encoderB = 0;
 static int32_t s_previousA = 0;
 static int32_t s_previousB = 0;
+static int32_t s_windowDeltaA = 0;
+static int32_t s_windowDeltaB = 0;
+static float s_windowTimeS = 0.0f;
+static float s_filteredSpeedA = 0.0f;
+static float s_filteredSpeedB = 0.0f;
+static bool s_speedReady;
 
 static uint32_t lockInterrupts(void)
 {
@@ -42,6 +50,12 @@ void BspEncoder_Reset(void)
     s_encoderB = 0;
     s_previousA = 0;
     s_previousB = 0;
+    s_windowDeltaA = 0;
+    s_windowDeltaB = 0;
+    s_windowTimeS = 0.0f;
+    s_filteredSpeedA = 0.0f;
+    s_filteredSpeedB = 0.0f;
+    s_speedReady = false;
     unlockInterrupts(primask);
 }
 
@@ -70,8 +84,32 @@ void BspEncoder_UpdateMeasurements(float dt_s, int32_t *speedA,
     s_previousA = countA;
     s_previousB = countB;
 
-    if (speedA != 0) *speedA = (int32_t)((float)deltaA * MM_PER_ENCODER_COUNT / dt_s);
-    if (speedB != 0) *speedB = (int32_t)((float)deltaB * MM_PER_ENCODER_COUNT / dt_s);
+    /* 13 PPR 在 5 ms 内只有 0～2 个脉冲，直接测速会产生约 112 mm/s
+     * 的量化跳变。先聚合 20 ms，再做一阶平滑供速度环使用。 */
+    s_windowDeltaA += deltaA;
+    s_windowDeltaB += deltaB;
+    s_windowTimeS += dt_s;
+    if (s_windowTimeS >= SPEED_MEASURE_WINDOW_S) {
+        float rawA = (float)s_windowDeltaA * MM_PER_ENCODER_COUNT /
+            s_windowTimeS;
+        float rawB = (float)s_windowDeltaB * MM_PER_ENCODER_COUNT /
+            s_windowTimeS;
+        if (!s_speedReady) {
+            s_filteredSpeedA = rawA;
+            s_filteredSpeedB = rawB;
+            s_speedReady = true;
+        } else {
+            s_filteredSpeedA = SPEED_FILTER_ALPHA * rawA +
+                (1.0f - SPEED_FILTER_ALPHA) * s_filteredSpeedA;
+            s_filteredSpeedB = SPEED_FILTER_ALPHA * rawB +
+                (1.0f - SPEED_FILTER_ALPHA) * s_filteredSpeedB;
+        }
+        s_windowDeltaA = 0;
+        s_windowDeltaB = 0;
+        s_windowTimeS = 0.0f;
+    }
+    if (speedA != 0) *speedA = (int32_t)s_filteredSpeedA;
+    if (speedB != 0) *speedB = (int32_t)s_filteredSpeedB;
     if (positionA != 0) *positionA = (int32_t)((float)countA * MM_PER_ENCODER_COUNT);
     if (positionB != 0) *positionB = (int32_t)((float)countB * MM_PER_ENCODER_COUNT);
 }

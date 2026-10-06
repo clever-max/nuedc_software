@@ -21,6 +21,9 @@ typedef struct {
     WheelSpeedPid motor_a;
     WheelSpeedPid motor_b;
     float max_output_permille;
+    float update_accumulator_s;
+    int16_t last_output_a_permille;
+    int16_t last_output_b_permille;
 } DualWheelSpeedController;
 
 /* 增益、前馈和 PWM 限幅由任务层提供；本模块不隐藏硬件标定参数。 */

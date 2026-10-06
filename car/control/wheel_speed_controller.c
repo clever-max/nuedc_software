@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stddef.h>
 
+#define SPEED_CONTROLLER_PERIOD_S (0.020f)
+
 /* 左右轮各自维护一套增量 PID，输入为编码器换算的 mm/s，输出为 PWM 千分比。 */
 static float clampf(float value, float low, float high)
 {
@@ -65,6 +67,9 @@ void WheelSpeedController_Init(DualWheelSpeedController *controller,
     controller->motor_b.target_mm_s = 0.0f;
     resetPid(&controller->motor_a);
     resetPid(&controller->motor_b);
+    controller->update_accumulator_s = 0.0f;
+    controller->last_output_a_permille = 0;
+    controller->last_output_b_permille = 0;
 }
 
 void WheelSpeedController_SetTargets(DualWheelSpeedController *controller,
@@ -91,10 +96,20 @@ void WheelSpeedController_Update(DualWheelSpeedController *controller,
     int16_t *output_a_permille, int16_t *output_b_permille)
 {
     if (controller == NULL || output_a_permille == NULL || output_b_permille == NULL) return;
-    *output_a_permille = updatePid(&controller->motor_a, measured_a_mm_s,
-        dt_s, controller->max_output_permille);
-    *output_b_permille = updatePid(&controller->motor_b, measured_b_mm_s,
-        dt_s, controller->max_output_permille);
+    if (dt_s > 0.0f) controller->update_accumulator_s += dt_s;
+    if (controller->update_accumulator_s < SPEED_CONTROLLER_PERIOD_S) {
+        *output_a_permille = controller->last_output_a_permille;
+        *output_b_permille = controller->last_output_b_permille;
+        return;
+    }
+    dt_s = controller->update_accumulator_s;
+    controller->update_accumulator_s = 0.0f;
+    controller->last_output_a_permille = updatePid(&controller->motor_a,
+        measured_a_mm_s, dt_s, controller->max_output_permille);
+    controller->last_output_b_permille = updatePid(&controller->motor_b,
+        measured_b_mm_s, dt_s, controller->max_output_permille);
+    *output_a_permille = controller->last_output_a_permille;
+    *output_b_permille = controller->last_output_b_permille;
 }
 
 void WheelSpeedController_Reset(DualWheelSpeedController *controller)
@@ -102,4 +117,7 @@ void WheelSpeedController_Reset(DualWheelSpeedController *controller)
     if (controller == NULL) return;
     resetPid(&controller->motor_a);
     resetPid(&controller->motor_b);
+    controller->update_accumulator_s = 0.0f;
+    controller->last_output_a_permille = 0;
+    controller->last_output_b_permille = 0;
 }
