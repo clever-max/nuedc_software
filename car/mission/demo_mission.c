@@ -22,6 +22,13 @@
 #define CURVE_ENTRY_CONFIRM_MS        (150U)
 #define STRAIGHT_MIN_MS               (1000U)
 #define LINE_ONLY_DURATION_MS         (30000U)
+#define REFERENCE_BASE_SPEED_MM_S     (160.0f)
+#define REFERENCE_WHEEL_BASE_MM       (45.0f)
+#define REFERENCE_TRACK_KP            (100.0f)
+#define REFERENCE_TRACK_KI            (0.15f)
+#define REFERENCE_TRACK_KD            (7.0f)
+#define REFERENCE_TRACK_INTEGRAL_MAX  (200.0f)
+#define REFERENCE_TURN_SCALE          (1.5f)
 
 #define WHEEL_PID_KP                  (1.50f)
 #define WHEEL_PID_KI                  (0.00f)
@@ -51,6 +58,8 @@ static float s_line_integral;
 static bool s_line_valid;
 static uint16_t s_gray_bits;
 static float s_previous_line_error;
+static float s_reference_integral;
+static int8_t s_reference_error_last;
 static int32_t s_speed_a_mm_s;
 static int32_t s_speed_b_mm_s;
 
@@ -105,6 +114,56 @@ static float lineCorrection(float dt_s, float line_error, bool line_valid)
     return correction;
 }
 
+static int8_t quantizeReferenceError(float position, bool valid)
+{
+    if (!valid) return (int8_t)s_reference_error_last;
+    if (position <= -9.0f) return -10;
+    if (position <= -6.0f) return -7;
+    if (position <= -4.0f) return -5;
+    if (position <= -2.0f) return -3;
+    if (position < 0.0f) return -1;
+    if (position <= 1.0f) return 0;
+    if (position <= 3.0f) return 1;
+    if (position <= 5.0f) return 3;
+    if (position <= 7.0f) return 5;
+    if (position <= 9.0f) return 7;
+    return 10;
+}
+
+static void updateReferenceLineOutput(float dt_s, float position, bool valid)
+{
+    int8_t error = quantizeReferenceError(position, valid);
+    float turn;
+    float spin_term;
+    float target_a;
+    float target_b;
+    int16_t command_a;
+    int16_t command_b;
+
+    (void)dt_s;
+    /* 参考仓库的循迹环：离散误差、积分限幅、离散微分和 1.5 倍输出。 */
+    s_reference_integral += (float)error;
+    if (s_reference_integral > REFERENCE_TRACK_INTEGRAL_MAX)
+        s_reference_integral = REFERENCE_TRACK_INTEGRAL_MAX;
+    if (s_reference_integral < -REFERENCE_TRACK_INTEGRAL_MAX)
+        s_reference_integral = -REFERENCE_TRACK_INTEGRAL_MAX;
+    turn = (float)error * REFERENCE_TRACK_KP +
+        REFERENCE_TRACK_KI * s_reference_integral +
+        (float)(error - s_reference_error_last) * REFERENCE_TRACK_KD;
+    s_reference_error_last = error;
+    turn *= REFERENCE_TURN_SCALE;
+
+    /* 参考仓库用 mrad/s 量级的转向量，这里保留同样的 0.001 缩放。 */
+    spin_term = 0.001f * REFERENCE_WHEEL_BASE_MM * turn;
+    target_a = REFERENCE_BASE_SPEED_MM_S - spin_term;
+    target_b = REFERENCE_BASE_SPEED_MM_S + spin_term;
+    WheelSpeedController_SetTargets(&s_wheel_controller, target_a, target_b);
+    WheelSpeedController_Update(&s_wheel_controller,
+        (float)s_speed_a_mm_s, (float)s_speed_b_mm_s, 0.005f,
+        &command_a, &command_b);
+    BspMotor_SetCommand(command_a, command_b);
+}
+
 static void updateWheelOutput(float dt_s, float base_speed_mm_s,
     float line_error, bool line_valid)
 {
@@ -135,6 +194,8 @@ static void resetMissionVariables(void)
     s_line_valid = false;
     s_gray_bits = 0U;
     s_previous_line_error = 0.0f;
+    s_reference_integral = 0.0f;
+    s_reference_error_last = 0;
     s_speed_a_mm_s = 0;
     s_speed_b_mm_s = 0;
 }
@@ -280,7 +341,7 @@ void DemoMission_Update(uint32_t now_tick, float dt_s,
     }
 
     if (s_state == DEMO_MISSION_LINE_ONLY) {
-        updateWheelOutput(dt_s, STRAIGHT_SPEED_MM_S, line_error, line_valid);
+        updateReferenceLineOutput(dt_s, line_error, line_valid);
         if (elapsed_ms >= LINE_ONLY_DURATION_MS) {
             s_state = DEMO_MISSION_DONE;
             WheelSpeedController_Reset(&s_wheel_controller);
