@@ -25,6 +25,11 @@ SECTION_NAMES = {
     "issues": "Known issues",
     "next": "Next actions",
 }
+COMMIT_REQUIRED_SUFFIXES = {
+    ".c", ".h", ".cc", ".cpp", ".py", ".ps1", ".sh", ".bat", ".syscfg",
+    ".s", ".S", ".cmd", ".ld", ".hex", ".out", ".elf", ".axf", ".cproject",
+    ".ccsproject", ".project", ".uvprojx", ".sct",
+}
 
 
 def run_git(args: list[str], cwd: Path = ROOT) -> str:
@@ -60,6 +65,23 @@ def git_facts(project: Path) -> tuple[str, str, str]:
     commit = run_git(["rev-parse", "--short", "HEAD"])
     status = run_git(["status", "--short", "--", str(project.relative_to(ROOT))])
     return branch or "(detached)", commit, status
+
+
+def changed_paths(status: str) -> list[str]:
+    paths = []
+    for line in status.splitlines():
+        if len(line) < 4:
+            continue
+        value = line[3:].strip()
+        if " -> " in value:
+            paths.extend(part.strip() for part in value.split(" -> "))
+        else:
+            paths.append(value)
+    return paths
+
+
+def requires_commit(path: str) -> bool:
+    return Path(path).suffix in COMMIT_REQUIRED_SUFFIXES
 
 
 def template(project: Path, status: str = "active") -> str:
@@ -170,10 +192,25 @@ def show(project: Path) -> None:
         print("(missing; run init)")
 
 
+def guard(project: Path) -> int:
+    """Fail when code/config/build/artifact files are not committed."""
+    _, commit, status = git_facts(project)
+    paths = [path for path in changed_paths(status) if requires_commit(path)]
+    if paths:
+        print("COMMIT_REQUIRED: uncommitted code/config/artifact files detected")
+        for path in paths:
+            print(f"- {path}")
+        print(f"Current HEAD: {commit}")
+        print("Create a Git commit before reporting this work complete.")
+        return 2
+    print(f"COMMIT_OK: no uncommitted code/config/artifact files for {project.relative_to(ROOT).as_posix()}")
+    return 0
+
+
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__)
     sub = p.add_subparsers(dest="command", required=True)
-    for name in ("show", "init", "update"):
+    for name in ("show", "init", "update", "guard"):
         cmd = sub.add_parser(name)
         cmd.add_argument("project", help="immediate child project directory")
         if name == "init":
@@ -195,6 +232,8 @@ def main() -> int:
         show(project)
     elif args.command == "init":
         init(project, args.status)
+    elif args.command == "guard":
+        return guard(project)
     else:
         update(project, args)
     return 0

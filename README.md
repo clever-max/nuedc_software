@@ -43,3 +43,9 @@ python tools/project_context.py show <project>
 ```
 
 完整流程见 [docs/CONTINUATION_WORKFLOW.md](docs/CONTINUATION_WORKFLOW.md)。
+
+涉及代码或固件时，交付前必须有 Git commit；可用以下命令检查：
+
+```powershell
+python tools/project_context.py guard <project>
+```

@@ -12,3 +12,7 @@
 ## 对话接续
 
 新对话先读取 `PROJECT_STATE.md`，再运行 `python ../tools/project_context.py show breathing_led`。完成一个阶段后，用同一工具更新状态并提交状态文件；通用规则见 `../docs/CONTINUATION_WORKFLOW.md`。
+
+## 代码提交硬约束
+
+凡涉及源码、SysConfig、项目元数据、构建脚本、校验脚本或固件镜像的改动，交付前必须创建 Git commit；未提交的代码改动不能报告为完成。相关改动可以合并为一个提交。完成阶段时同步更新 `PROJECT_STATE.md`，并运行 `python ../tools/project_context.py guard <project>`。

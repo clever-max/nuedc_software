@@ -2,6 +2,8 @@
 
 工作区内每个独立工程都保留一个可提交的 `PROJECT_STATE.md`。它记录人类决策、当前目标、已验证事实、已知问题和下一步；源码、`.syscfg`、Git 历史和构建产物仍是实际状态的依据。新对话不能只依赖聊天历史。
 
+**硬约束：凡涉及源码、SysConfig、项目元数据、构建/校验脚本或固件镜像的改动，交付前必须创建 Git commit。未提交的代码改动不能报告为完成。** 一次阶段可以把相关改动合并为一个提交，但不能跳过提交。
+
 ## 新建同项目 Codex 对话时
 
 在项目目录对应的工作区根目录执行：
@@ -51,9 +53,12 @@ git status --short
 git add car/PROJECT_STATE.md <本次实际改动>
 git commit -m "<清晰描述>"
 git push origin <当前分支>
+python tools/project_context.py guard car
 ```
 
 `PROJECT_STATE.md` 不应保存密码、令牌、完整串口日志或机器绝对路径；大日志放在项目 `docs/analysis/`，状态文件只保留结论和相对链接。
+
+`guard` 会检查项目范围内未提交的源码、SysConfig、项目元数据、脚本和固件镜像；发现这些文件时返回失败并列出路径。状态文件和普通文档也应在交接前提交，但它们不会被 `guard` 当作代码改动。
 
 ## 固件和稳定版发布
 

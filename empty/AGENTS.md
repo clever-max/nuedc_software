@@ -41,3 +41,7 @@ After changes, report separately whether source checks, SysConfig generation, co
 ## Conversation continuity
 
 Read `PROJECT_STATE.md` first in every new conversation, then run `python ../tools/project_context.py show empty`. Update and commit that state file at each handoff; see `../docs/CONTINUATION_WORKFLOW.md`.
+
+## Code commit invariant
+
+Any source, SysConfig, project metadata, build-script, validation-script, or firmware-image change must be committed before the work is reported complete. Update `PROJECT_STATE.md` and run `python ../tools/project_context.py guard empty` before handoff.
