@@ -16,23 +16,20 @@
 #define CONTROL_PERIOD_MS             (5U)
 #define ROUTE_TIMEOUT_MS              (900000U)
 #define CURVE_TARGET_DEG              (170.0f)
-#define CURVE_SPEED_MM_S              (180.0f)
-#define STRAIGHT_SPEED_MM_S           (240.0f)
+#define CURVE_SPEED_MM_S              (110.0f)
+#define STRAIGHT_SPEED_MM_S           (200.0f)
 #define CURVE_START_RATE_DEG_S        (8.0f)
 #define CURVE_ENTRY_CONFIRM_MS        (150U)
 #define STRAIGHT_MIN_MS               (1000U)
 #define LINE_ONLY_DURATION_MS         (30000U)
-#define REFERENCE_BASE_SPEED_MM_S     (200.0f)
-#define REFERENCE_SPEED_RAMP_MM_S2    (600.0f)
+#define REFERENCE_BASE_SPEED_MM_S     (160.0f)
+#define REFERENCE_SPEED_RAMP_MM_S2    (400.0f)
 #define REFERENCE_WHEEL_BASE_MM       (45.0f)
 #define REFERENCE_TRACK_KP            (100.0f)
 #define REFERENCE_TRACK_KI            (0.15f)
 #define REFERENCE_TRACK_KD            (7.0f)
 #define REFERENCE_TRACK_INTEGRAL_MAX  (200.0f)
 #define REFERENCE_TURN_SCALE          (1.5f)
-#define REFERENCE_TURN_SCALE_MEDIUM   (3.0f)
-#define REFERENCE_TURN_SCALE_SHARP    (5.0f)
-#define REFERENCE_TURN_SCALE_CORNER   (8.0f)
 
 #define WHEEL_PID_KP                  (0.80f)
 #define WHEEL_PID_KI                  (0.00f)
@@ -142,7 +139,6 @@ static void updateReferenceLineOutput(float dt_s, float position, bool valid)
 {
     int8_t error = quantizeReferenceError(position, valid);
     float turn;
-    float turn_scale;
     float spin_term;
     float target_a;
     float target_b;
@@ -159,13 +155,7 @@ static void updateReferenceLineOutput(float dt_s, float position, bool valid)
         REFERENCE_TRACK_KI * s_reference_integral +
         (float)(error - s_reference_error_last) * REFERENCE_TRACK_KD;
     s_reference_error_last = error;
-    /* 稳定性验证档的直角/锐角不能只靠固定小差速：误差越大，越快降低内侧轮，
-     * 最大误差允许内侧轮反转，帮助车体绕过尖角后重新捕线。 */
-    turn_scale = REFERENCE_TURN_SCALE;
-    if (fabsf((float)error) >= 10.0f) turn_scale = REFERENCE_TURN_SCALE_CORNER;
-    else if (fabsf((float)error) >= 7.0f) turn_scale = REFERENCE_TURN_SCALE_SHARP;
-    else if (fabsf((float)error) >= 5.0f) turn_scale = REFERENCE_TURN_SCALE_MEDIUM;
-    turn *= turn_scale;
+    turn *= REFERENCE_TURN_SCALE;
 
     /* 参考仓库用 mrad/s 量级的转向量，这里保留同样的 0.001 缩放。 */
     spin_term = 0.001f * REFERENCE_WHEEL_BASE_MM * turn;
