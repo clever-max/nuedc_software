@@ -133,7 +133,10 @@ static uint8_t readByte(bool acknowledge)
 
 static float positionFromBits(uint16_t bits)
 {
-    /* 通道 0 到 11 映射为 -11 到 +11，多个连续亮点取平均位置。 */
+    /*
+     * NCHD1 手册规定 bit0 从阵列最右侧开始，bit11 逐步向最左侧排列。
+     * 这里让右侧为负、左侧为正，保持参考循迹算法的转向约定。
+     */
     int32_t sum = 0;
     uint32_t count = 0U;
     uint8_t index;

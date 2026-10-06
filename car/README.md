@@ -27,7 +27,7 @@
 | PB21 | B21 启动/停止按键，低电平有效 |
 | PB27 | 无源蜂鸣器 |
 
-左轮是 Motor A：AIN1/AIN2=PA0/PA1，编码器 E1A/E1B=PA27/PA25；右轮是 Motor B：BIN1/BIN2=PA8/PA9，编码器 E2A/E2B=PB25/PB20。先用开环固件确认两轮正方向。
+左轮是 Motor A：AIN1/AIN2=PA0/PA1，编码器 E1A/E1B=PA27/PA25；右轮是 Motor B：BIN1/BIN2=PA8/PA9，编码器 E2A/E2B=PB25/PB20。NCHD12 使用 5V 供电，并将 V0 与 3V3 短接选择 3.3V 输出。先用开环固件确认两轮正方向。
 | PB4 / UART1_TX | CH340 RXD |
 | PB5 / UART1_RX | CH340 TXD |
 | PB2 / I2C1_SCL | MPU6050 SCL（当前未使用） |
