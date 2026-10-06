@@ -32,7 +32,7 @@
 
 #define WHEEL_PID_KP                  (1.50f)
 #define WHEEL_PID_KI                  (0.00f)
-#define WHEEL_PID_KD                  (0.01f)
+#define WHEEL_PID_KD                  (0.00f)
 #define WHEEL_PID_FEED_FORWARD        (0.00f)
 #define LINE_PID_KP                   (4.0f)
 #define LINE_PID_KI                   (0.0f)
@@ -140,7 +140,6 @@ static void updateReferenceLineOutput(float dt_s, float position, bool valid)
     int16_t command_a;
     int16_t command_b;
 
-    (void)dt_s;
     /* 参考仓库的循迹环：离散误差、积分限幅、离散微分和 1.5 倍输出。 */
     s_reference_integral += (float)error;
     if (s_reference_integral > REFERENCE_TRACK_INTEGRAL_MAX)
@@ -159,7 +158,7 @@ static void updateReferenceLineOutput(float dt_s, float position, bool valid)
     target_b = REFERENCE_BASE_SPEED_MM_S + spin_term;
     WheelSpeedController_SetTargets(&s_wheel_controller, target_a, target_b);
     WheelSpeedController_Update(&s_wheel_controller,
-        (float)s_speed_a_mm_s, (float)s_speed_b_mm_s, 0.005f,
+        (float)s_speed_a_mm_s, (float)s_speed_b_mm_s, dt_s,
         &command_a, &command_b);
     BspMotor_SetCommand(command_a, command_b);
 }
