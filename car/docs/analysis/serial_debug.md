@@ -1,37 +1,33 @@
 # Closed-loop right-turn route UART operation
 
-Open the Tianmengxing CH340E UART0 port at 115200 baud, 8 data bits, no parity, one stop bit. Send commands with a newline.
+Open the external CH340 UART1 connection at 115200 baud, 8 data bits, no parity, one stop bit. Wire CH340 TXD to PB5 (UART1_RX), CH340 RXD to PB4 (UART1_TX), and share GND. Send commands with a newline.
 
 | Command | Behavior |
 | --- | --- |
-| `RUN15` | Starts the 4-straight/3-right-turn route if JY61S IIC initialization succeeds. |
+| `RUN15` | Starts the MPU6050 curve-straight-curve route after I²C initialization succeeds. |
 | `STOP` | Requests a coast stop and enters `ABORT`. |
 
-B21 has the same start/stop behavior. Keep the chassis stationary after reset for gyro bias calibration. The route is:
+B21 has the same start/stop behavior. Keep the chassis stationary after reset for MPU6050 bias calibration. The route is:
 
 ```text
-STRAIGHT_1 2 s
-TURN_1      right 90° target
-STRAIGHT_2 2 s
-TURN_2      right 90° target
-STRAIGHT_3 2 s
-TURN_3      right 90° target
-STRAIGHT_4 2 s
+CURVE_1    approximately 170° yaw change
+STRAIGHT_TRACK  until the next sustained bend
+CURVE_2    approximately 170° yaw change, then stop
 ```
 
-如果 JY61S 未安装、UART2 没有收到有效帧或零偏校准未完成，遥测会显示 `gyro=ERR`，`RUN15` 和 B21 会被拒绝，PWM 保持 `0/0`；这是闭环路线的安全条件，不是电机故障。UART0 PA10/PA11 是调试口，JY61S 使用 UART2 PB15/PB16。
+如果 MPU6050 未安装、I²C 地址 `0x68` 无应答或零偏校准未完成，遥测会显示 `gyro=ERR`，`RUN15` 和 B21 会被拒绝，PWM 保持 `0/0`；这是闭环路线的安全条件，不是电机故障。外置 CH340 使用 UART1 PB4/PB5。
 
 Telemetry is printed at about 10 Hz:
 
 ```text
-ms=1200 state=FWD gyro=OK backend=WIT50 yaw=-0.4 target_yaw=0.0 yaw_rate=-0.2 turn_err=0.0 speed=198/202 pwm_permille=220/218
+ms=1200 state=CURVE gyro=OK backend=MPU6050 yaw=12.4 target_yaw=170.0 yaw_rate=34.2 turn_err=157.6 speed=108/112 pwm_permille=220/218
 ```
 
 Fields:
 
-- `state`: `IDLE`, `FWD`, `TURN`, `COAST`, `DONE` or `ABORT`.
-- `gyro`: JY61S UART frame reception and zero-bias calibration status.
-- `backend`: should be `UART2` when the active sensor path is selected.
+- `state`: `IDLE`, `CURVE`, `STRAIGHT`, `DONE` or `ABORT`.
+- `gyro`: MPU6050 I²C initialization and zero-bias calibration status.
+- `backend`: `MPU6050` when the active sensor path is selected.
 - `yaw`: integrated Z-axis yaw in degrees.
 - `target_yaw`: heading held during the current straight segment or turn endpoint.
 - `yaw_rate`: filtered gyro-Z rate in degrees per second; the sign is useful for checking the right-turn convention.
@@ -39,6 +35,6 @@ Fields:
 - `speed`: encoder-derived wheel speeds in mm/s (A/B).
 - `pwm_permille`: signed PID commands for the two motors.
 
-If `gyro=ERR`, `RUN15` is rejected. If a turn does not settle within ±1.5° and below 12°/s before 3 s, the route aborts. The right-turn sign is controlled by `RIGHT_TURN_YAW_SIGN` in `mission/demo_mission.c`; the default is -1 for the usual JY61S Z-axis convention.
+If `gyro=ERR`, `RUN15` is rejected. The first bend determines the signed yaw direction automatically. A second bend is accepted after the straight interval when the same signed yaw rate remains above 8°/s for 150 ms.
 
-Initial controller values are deliberately marked as tuning values in the source: target wheel speed 200 mm/s, wheel `Kp=0.50`, `Ki=0.20`, `Kd=0`, feed-forward 1.0 permille per mm/s, straight heading `Kp=2.0`, `Kd=0.10`, and turn angle `Kp=4.0`, `Ki=0`, `Kd=0.25`. Tune only after confirming encoder count scale, gyro sign, motor direction and UART telemetry.
+Initial controller values are deliberately marked as tuning values in the source: curve target 110 mm/s, straight target 200 mm/s, wheel `Kp=0.50`, `Ki=0.20`, `Kd=0`, feed-forward 1.0 permille per mm/s, and line `Kp=8.0`, `Kd=0.05`. Tune only after confirming encoder count scale, gyro sign, motor direction and UART telemetry.

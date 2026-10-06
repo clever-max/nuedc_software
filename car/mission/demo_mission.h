@@ -6,19 +6,10 @@
 
 typedef enum {
     DEMO_MISSION_IDLE = 0,
-    DEMO_MISSION_STRAIGHT_1,
-    DEMO_MISSION_COAST_TO_TURN_1,
-    DEMO_MISSION_TURN_1,
-    DEMO_MISSION_COAST_TO_STRAIGHT_2,
-    DEMO_MISSION_STRAIGHT_2,
-    DEMO_MISSION_COAST_TO_TURN_2,
-    DEMO_MISSION_TURN_2,
-    DEMO_MISSION_COAST_TO_STRAIGHT_3,
-    DEMO_MISSION_STRAIGHT_3,
-    DEMO_MISSION_COAST_TO_TURN_3,
-    DEMO_MISSION_TURN_3,
-    DEMO_MISSION_COAST_TO_STRAIGHT_4,
-    DEMO_MISSION_STRAIGHT_4,
+    DEMO_MISSION_CURVE_1,
+    DEMO_MISSION_STRAIGHT_TRACK,
+    DEMO_MISSION_CURVE_2,
+    DEMO_MISSION_LINE_ONLY,
     DEMO_MISSION_DONE,
     DEMO_MISSION_ABORTED
 } DemoMissionState;
@@ -46,6 +37,7 @@ void DemoMission_Init(bool gyro_ready);
 bool DemoMission_CanStart(void);
 bool DemoMission_IsRunning(void);
 bool DemoMission_Start(uint32_t now_tick, float yaw_deg);
+bool DemoMission_StartLineOnly(uint32_t now_tick);
 void DemoMission_RequestStop(void);
 void DemoMission_Update(uint32_t now_tick, float dt_s,
     int32_t speed_a_mm_s, int32_t speed_b_mm_s,

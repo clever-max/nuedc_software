@@ -3,7 +3,7 @@
 #include "mission/demo_mission.h"
 #include "bsp/motor_pwm.h"
 #include "bsp/encoder.h"
-#include "bsp/jy61s_uart.h"
+#include "bsp/mpu6050.h"
 #include "bsp/gray_sensor.h"
 #include "bsp/buzzer.h"
 #include "protocol/serial_console.h"
@@ -19,6 +19,12 @@ static volatile uint32_t s_control_ticks;
 static volatile uint8_t s_pending_ticks;
 static volatile uint8_t s_telemetry_divider;
 static volatile bool s_telemetry_due;
+
+static bool startLineMission(void)
+{
+    /* 当前验证版本完全不依赖陀螺仪，B21 直接启动灰度循迹。 */
+    return DemoMission_StartLineOnly(s_control_ticks);
+}
 
 static uint8_t takePendingTicks(void)
 {
@@ -48,8 +54,13 @@ static void processButton(void)
             if (DemoMission_IsRunning()) {
                 DemoMission_RequestStop();
                 BspBuzzer_Start(120U);
-            } else if (DemoMission_Start(s_control_ticks, BspJy61sUart_GetYawDeg())) {
+            } else if (startLineMission()) {
                 BspBuzzer_Start(220U);
+                SerialConsole_WriteText("OK B21\r\n");
+            } else {
+                /* 只有任务已在运行时才会拒绝重复启动。 */
+                BspMotor_Coast();
+                SerialConsole_WriteText("ERR B21 busy\r\n");
             }
         }
     }
@@ -62,12 +73,12 @@ static void processSerialCommand(void)
     switch (command) {
     case SERIAL_COMMAND_RUN15:
     case SERIAL_COMMAND_RUNPID:
-        if (DemoMission_Start(s_control_ticks, BspJy61sUart_GetYawDeg())) {
+        if (startLineMission()) {
             SerialConsole_WriteText(command == SERIAL_COMMAND_RUNPID ? "OK RUNPID\r\n" : "OK RUN15\r\n");
             BspBuzzer_Start(220U);
-        } else if (!BspJy61sUart_IsReady())
-            SerialConsole_WriteText("ERR gyro\r\n");
-        else SerialConsole_WriteText("ERR busy\r\n");
+        } else {
+            SerialConsole_WriteText("ERR busy\r\n");
+        }
         break;
     case SERIAL_COMMAND_STOP:
         DemoMission_RequestStop();
@@ -90,16 +101,15 @@ void App_Init(void)
     BspMotor_Init();
     BspGraySensor_Init();
     BspBuzzer_Init();
-    (void)BspJy61sUart_Init();
-    DemoMission_Init(BspJy61sUart_IsReady());
+    /* 本验证版本不访问 MPU6050，避免未接传感器阻塞启动。 */
+    DemoMission_Init(false);
     SerialConsole_Init();
+    SerialConsole_WriteText("MPU6050=DISABLED; B21 starts gray line 30s\r\n");
 
     NVIC_ClearPendingIRQ(CONTROL_TICK_INST_INT_IRQN);
     NVIC_EnableIRQ(CONTROL_TICK_INST_INT_IRQN);
     NVIC_ClearPendingIRQ(DEBUG_UART_INST_INT_IRQN);
     NVIC_EnableIRQ(DEBUG_UART_INST_INT_IRQN);
-    NVIC_ClearPendingIRQ(JY61_UART_INST_INT_IRQN);
-    NVIC_EnableIRQ(JY61_UART_INST_INT_IRQN);
     NVIC_ClearPendingIRQ(ENCODERS_GPIOA_INT_IRQN);
     NVIC_EnableIRQ(ENCODERS_GPIOA_INT_IRQN);
     NVIC_ClearPendingIRQ(GPIO_MULTIPLE_GPIOB_INT_IRQN);
@@ -117,21 +127,18 @@ void App_RunOnce(void)
         float dt_s = 0.005f * (float)elapsed_ticks;
         int32_t speed_a, speed_b, position_a, position_b;
         GraySensorSample gray;
-        /* 一个控制周期内依次采集编码器、灰度和 JY61S，并执行一次控制。 */
+        /* 一个控制周期内依次采集编码器、灰度和 MPU6050，并执行一次控制。 */
         BspEncoder_UpdateMeasurements(dt_s, &speed_a, &speed_b,
             &position_a, &position_b);
         BspGraySensor_Read(&gray);
-        BspJy61sUart_Update(dt_s);
         DemoMission_Update(s_control_ticks, dt_s, speed_a, speed_b,
-            BspJy61sUart_GetYawDeg(), BspJy61sUart_GetYawRateDegS(),
-            BspJy61sUart_IsReady(), gray.position, gray.valid, gray.bits);
+            0.0f, 0.0f, false, gray.position, gray.valid, gray.bits);
         BspBuzzer_Update();
     }
     if (s_telemetry_due) {
         DemoMissionSnapshot snapshot;
         s_telemetry_due = false;
-        DemoMission_GetSnapshot(s_control_ticks, BspJy61sUart_GetYawDeg(),
-            BspJy61sUart_GetYawRateDegS(), BspJy61sUart_IsReady(), &snapshot);
+        DemoMission_GetSnapshot(s_control_ticks, 0.0f, 0.0f, false, &snapshot);
         SerialConsole_PrintTelemetry(&snapshot);
     }
     delay_cycles(CPUCLK_FREQ / 1000U);
@@ -152,11 +159,6 @@ void App_OnControlTickInterrupt(void)
 void App_OnUartInterrupt(void)
 {
     SerialConsole_IRQHandler();
-}
-
-void App_OnGyroUartInterrupt(void)
-{
-    BspJy61sUart_IRQHandler();
 }
 
 void App_OnEncoderInterrupt(void)

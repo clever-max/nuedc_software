@@ -7,7 +7,7 @@
 
 #define COMMAND_CAPACITY (24U)
 
-/* UART0 接收只组装换行命令；命令含义在前台 App_RunOnce 中执行。 */
+/* UART1 接收只组装换行命令；命令含义在前台 App_RunOnce 中执行。 */
 static volatile char s_rx_buffer[COMMAND_CAPACITY];
 static volatile uint8_t s_rx_length;
 static volatile bool s_command_ready;
@@ -55,19 +55,10 @@ static const char *stateName(DemoMissionState state)
 {
     switch (state) {
     case DEMO_MISSION_IDLE: return "IDLE";
-    case DEMO_MISSION_STRAIGHT_1:
-    case DEMO_MISSION_STRAIGHT_2:
-    case DEMO_MISSION_STRAIGHT_3:
-    case DEMO_MISSION_STRAIGHT_4: return "FWD";
-    case DEMO_MISSION_COAST_TO_TURN_1:
-    case DEMO_MISSION_COAST_TO_STRAIGHT_2:
-    case DEMO_MISSION_COAST_TO_TURN_2:
-    case DEMO_MISSION_COAST_TO_STRAIGHT_3:
-    case DEMO_MISSION_COAST_TO_TURN_3:
-    case DEMO_MISSION_COAST_TO_STRAIGHT_4: return "COAST";
-    case DEMO_MISSION_TURN_1:
-    case DEMO_MISSION_TURN_2:
-    case DEMO_MISSION_TURN_3: return "TURN";
+    case DEMO_MISSION_CURVE_1:
+    case DEMO_MISSION_CURVE_2: return "CURVE";
+    case DEMO_MISSION_STRAIGHT_TRACK: return "STRAIGHT";
+    case DEMO_MISSION_LINE_ONLY: return "LINE30";
     case DEMO_MISSION_DONE: return "DONE";
     case DEMO_MISSION_ABORTED: return "ABORT";
     default: return "?";
@@ -78,9 +69,9 @@ void SerialConsole_Init(void)
 {
     s_rx_length = 0U;
     s_command_ready = false;
-    SerialConsole_WriteText("12ch gray line-follow + encoder PID demo UART0 115200 8N1\r\n");
-    SerialConsole_WriteText("B21/RUNPID/RUN15: gray line 15s; STOP aborts\r\n");
-    SerialConsole_WriteText("wheel target 200 mm/s; gyro disabled in this demo\r\n");
+    SerialConsole_WriteText("NCHD12 gray line demo UART1 115200 8N1\r\n");
+    SerialConsole_WriteText("B21/RUNPID/RUN15: gray line 30s; STOP aborts\r\n");
+    SerialConsole_WriteText("MPU6050 disabled; encoder speed PID active\r\n");
 }
 
 void SerialConsole_WriteText(const char *text)

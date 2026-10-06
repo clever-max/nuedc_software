@@ -22,15 +22,15 @@ These are the four AT8236 logic inputs. The 12 V motor supply, motor outputs and
 
 The current encoder code uses one A rising edge per encoder PPR cycle and samples B. With the user-provided 13 PPR, 1:28 gear ratio and 65 mm wheel, the initial estimate is 364 counts per wheel revolution. Verify this scale mechanically before treating speed as calibrated.
 
-## JY61S（UART 模式）
+## MPU6050（I²C 模式）
 
-| JY61S signal | MCU pin | Function |
+| MPU6050 signal | MCU pin | Function |
 | --- | --- | --- |
-| TX | PB16 | UART2_RX |
-| RX | PB15 | UART2_TX |
-| SCL/SDA/INT | open | not used by the active UART driver |
+| SCL | PB2 | I2C1_SCL |
+| SDA | PB3 | I2C1_SDA |
+| INT | PB1 | GPIO input, reserved data-ready edge |
 
-The active driver parses JY61S `0x55 0x52` angular-velocity frames at 115200 baud and calibrates Z-axis bias from 100 samples while the car is still. UART0 PA10/PA11 remains the debug console. Set the sensor to UART mode with the configuration command `FF AA 61` before use.
+The active driver uses the raw MPU6050 7-bit address `0x68`, configures ±250 dps and samples the Z-axis gyro through I2C1. It removes a 100-sample static bias and applies a first-order rate filter before integrating yaw. The external CH340 debug console is UART1: PB4=TX and PB5=RX. Keep the car still after reset until the bias calibration has completed.
 
 ## Buzzer
 
@@ -38,7 +38,7 @@ The passive buzzer signal is on PB27. The pin is configured as a GPIO output and
 
 ## Gray sensor reservation
 
-The current user arrangement uses PA28/PA31 as a software I2C bus for the NCHD1/NCHD12 gray sensor. Do not use PA0/PA1 for gray I2C because they are motor PWM. See the shared sensor index at `../../../docs/reference/sensors/INDEX.md`.
+The current user arrangement uses PA28/PA31 as a software I2C bus for the NCHD1/NCHD12 gray sensor. These pins are reserved as `GRAY_SENSOR_BUS` in SysConfig and are dynamically switched by `bsp/gray_sensor.c` to emulate open-drain I2C. Do not use PA0/PA1 for gray I2C because they are motor PWM. See the shared sensor index at `../../../docs/reference/sensors/INDEX.md`.
 
 ## NCHD12 12-channel grayscale sensor
 

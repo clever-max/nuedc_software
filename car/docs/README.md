@@ -7,7 +7,7 @@ This directory keeps the user-provided AT8236 package's useful review materials 
 1. [Wiring and configuration record](analysis/wiring.md) — user wiring and the matching SysConfig mapping.
 2. [AT8236 behavior and source notes](analysis/AT8236_reference_notes.md) — manual facts, example behavior, and adaptation limits.
 3. [MG513X Hall notes](analysis/MG513X_Hall_notes.md) — confirmed encoder type, signal precautions, and distance-count formula.
-4. [JY61S connection notes](analysis/JY61S_notes.md) — UART2 PB15/PB16 wiring and the PC serial monitor.
+4. [MPU6050 connection notes](analysis/MPU6050_notes.md) — I2C1 PB2/PB3 wiring, startup calibration and yaw route.
 5. [12-channel grayscale line following](analysis/grayscale_line_following.md) — PA28/PA31 software I²C, PCA9555 bit map, line error and encoder PID.
 5. [Serial debug guide](analysis/serial_debug.md) — onboard CH340E port settings and telemetry fields.
 6. [Initial COM8 trace](analysis/serial_debug_20261001.md) — a historical speed comparison captured with the previous encoder scale; its converted speeds are invalid under the corrected Hall specification.

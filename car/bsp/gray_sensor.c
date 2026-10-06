@@ -11,11 +11,11 @@
 /* The NCHD12 sample uses a PCA9555-compatible 12-bit input image.  PA0/PA1
  * are occupied by motor PWM in this project, so the reserved PA28/PA31 pair
  * is used for a software I2C bus. */
-#define GRAY_SCL_PIN             (DL_GPIO_PIN_28)
-#define GRAY_SDA_PIN             (DL_GPIO_PIN_31)
-#define GRAY_SCL_IOMUX           (IOMUX_PINCM3)
-#define GRAY_SDA_IOMUX           (IOMUX_PINCM6)
-#define GRAY_PORT                (GPIOA)
+#define GRAY_SCL_PIN             (GRAY_SENSOR_BUS_GRAY_SCL_PIN)
+#define GRAY_SDA_PIN             (GRAY_SENSOR_BUS_GRAY_SDA_PIN)
+#define GRAY_SCL_IOMUX           (GRAY_SENSOR_BUS_GRAY_SCL_IOMUX)
+#define GRAY_SDA_IOMUX           (GRAY_SENSOR_BUS_GRAY_SDA_IOMUX)
+#define GRAY_PORT                (GRAY_SENSOR_BUS_PORT)
 #define GRAY_WRITE_ADDRESS       (0x40U)
 #define GRAY_READ_ADDRESS        (0x41U)
 #define GRAY_INPUT_REGISTER      (0x00U)

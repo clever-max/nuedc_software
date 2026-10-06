@@ -1,6 +1,6 @@
-# Car closed-loop right-turn route (AT8236)
+# Car closed-loop track validation (AT8236 + MPU6050)
 
-## Current motor, encoder, JY61S UART, gray sensor and buzzer wiring
+## Current motor, encoder, MPU6050, gray sensor and buzzer wiring
 
 | MCU pin / peripheral | AT8236 / sensor signal |
 | --- | --- |
@@ -12,26 +12,27 @@
 | PA25 encoder input | E1B |
 | PB25 encoder interrupt | E2A |
 | PB20 encoder input | E2B |
-| PB15 / UART2_TX | JY61S RX |
-| PB16 / UART2_RX | JY61S TX |
+| PB2 / I2C1_SCL | MPU6050 SCL |
+| PB3 / I2C1_SDA | MPU6050 SDA |
+| PB1 GPIO interrupt | MPU6050 INT |
 | PA28 | NCHD12 SCL (software I2C) |
 | PA31 | NCHD12 SDA (software I2C) |
 | PB27 GPIO | passive buzzer |
 
-The current project no longer uses H8 for motor PWM. AT8236 logic inputs must be wired directly to the four PA PWM pins above, with common ground. JY61S is now read through UART2; set it to UART mode at 115200 baud. UART0 PA10/PA11 remains the external CH340 debug port. Keep the car still during UART gyro bias calibration. See [JY61S notes](docs/analysis/JY61S_notes.md).
+The current project no longer uses H8 for motor PWM. AT8236 logic inputs must be wired directly to the four PA PWM pins above, with common ground. The active attitude source is the raw MPU6050 on I2C1 at address `0x68`; keep the chassis still during startup bias calibration. The external CH340 debug port is UART1: CH340 TXD→PB5/RX and CH340 RXD→PB4/TX. See [MPU6050 notes](docs/analysis/MPU6050_notes.md).
 
 ## Demo behavior
 
-The active mission is an encoder-PID plus 12-channel gray-position line-following demo. Press B21 or send `RUNPID`/`RUN15` over UART0 to run for 15 s at a 200 mm/s wheel target. Gray correction changes the two wheel targets; the gyro is retained on UART2 but disabled as a start condition. Press B21 again or send `STOP` to abort. UART0 is 115200-8-N-1; telemetry is about 10 Hz.
+The active mission is an encoder-PID plus 12-channel gray-position line-following route. Press B21 or send `RUNPID`/`RUN15` over UART1 to start the first curve immediately, follow the straight, detect the second curve and stop after the second approximately 170° heading change. The MPU6050 must pass startup calibration. Press B21 again or send `STOP` to abort. UART1 is 115200-8-N-1; telemetry is about 10 Hz.
 
-The user reports that the left-wheel forward direction is correct. The BSP inverts Motor B's electrical polarity so positive speed targets mean physical forward for both wheels. The active demo does not require JY61S calibration; if UART2 frames are present they are still parsed for future gyro-enabled missions.
+The user reports that the left-wheel forward direction is correct. The BSP inverts Motor B's electrical polarity so positive speed targets mean physical forward for both wheels. The route uses gray position correction in all three track sections and MPU6050 Z-axis angle only for section transitions and stopping.
 
 ## Project baseline
 
 - CCS Theia project based on the workspace MSPM0G3507 starter.
 - Device MSPM0G3507, TI Arm Clang, MSPM0 SDK 2.11.0.07.
 - SysConfig source: `car.syscfg`; entry point: `car.c`.
-- Project modules: `app/` (scheduler), `mission/` (gray line/PID state machine), `protocol/` (UART console), `bsp/` (motor/encoder/gray/JY61S/buzzer), `control/` (twin wheel incremental PID).
+- Project modules: `app/` (scheduler), `mission/` (track state machine), `protocol/` (UART console), `bsp/` (motor/encoder/gray/MPU6050/buzzer), `control/` (twin wheel incremental PID).
 - PID starting values are conservative commissioning placeholders and must be tuned from telemetry; they are not a completed physical calibration.
 - User-supplied wheel diameter: 65 mm. The user confirms 1:28 gearing and 12 V motor voltage, and specifies Hall encoder 13 PPR. The active route uses the encoder estimate documented in [MG513X Hall notes](docs/analysis/MG513X_Hall_notes.md).
 

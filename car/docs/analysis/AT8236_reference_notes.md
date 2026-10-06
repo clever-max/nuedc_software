@@ -39,7 +39,7 @@ The D157B STM32 instructions say its example can run open-loop or closed-loop an
 - Establish input states and test one bridge at a time before driving both wheels.
 - Do not copy the sample's periodic direction reversal into the car project; reversal while spinning can cause abrupt braking/current transients.
 - Verify whether low/low coast behavior is acceptable as the project's startup state for the exact module variant.
-- UART0 telemetry is configured on PA10/PA11 at 115200 baud through the Tianmengxing board's CH340E.
+- External CH340 telemetry is configured on UART1 at 115200 baud: PB4 is MCU TX and PB5 is MCU RX. The Tianmengxing onboard UART0/PA10-PA11 is not used by the active console.
 - Encoder GPIO mapping is now E1A/E1B/E2A/E2B→PA27/PA25/PB25/PB20, as recorded in [wiring.md](wiring.md). The user-provided motor connectors list E1/E2 signals and a 5V pin; confirm signal voltage and pin tolerance before connection.
 - No battery ADC input is assigned. The active PWM mapping is the four direct MCU signals PA0/PA1/PA8/PA9→AIN1/AIN2/BIN1/BIN2; direction polarity is configured in `bsp/motor_pwm.c` and should be checked with the wheels clear of the floor.
 

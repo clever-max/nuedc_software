@@ -16,14 +16,8 @@ void GROUP1_IRQHandler(void)
 
 void DEBUG_UART_INST_IRQHandler(void)
 {
-    /* UART0 是电脑调试命令和遥测通道。 */
+    /* UART1 是外置 CH340 的电脑调试命令和遥测通道。 */
     App_OnUartInterrupt();
-}
-
-void JY61_UART_INST_IRQHandler(void)
-{
-    /* UART2 接收 JY61S 的 0x55 数据帧。 */
-    App_OnGyroUartInterrupt();
 }
 
 void CONTROL_TICK_INST_IRQHandler(void)
