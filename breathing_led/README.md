@@ -1,14 +1,12 @@
-# Tianmengxing MSPM0G3507 breathing LED
+# `breathing_led` 呼吸灯工程
 
-独立 CCS Theia 项目，使用板载用户 LED 做周期性呼吸效果。
+独立的 MSPM0G3507 CCS Theia 示例，使用板载 PB22 LED 做周期性渐变。
 
-- 芯片：MSPM0G3507，SDK 2.11.0.07，TI Arm Clang，XDS110。
-- 板载 LED：PB22，高电平点亮；PWM 使用 TIMG8-C1。
-- PWM 占空比在约 0% 至 100% 间渐变，PWM 周期和频率由 `breathing_led.syscfg` 中的 PWM 配置决定。
-- 入口：`breathing_led.c`；配置源：`breathing_led.syscfg`。
+- 入口：`breathing_led.c`
+- 配置源：`breathing_led.syscfg`
+- LED：PB22，高电平点亮
+- PWM：TIMG8 的 C1 输出到 PB22
+- 目标配置：`targetConfigs/MSPM0G3507.ccxml`
+- 可烧录镜像：`breathing_led.hex`
 
-在 CCS Theia 导入该目录后构建并下载。硬件表现需在实际天猛星板上确认。
-
-## Flash image
-
-The completed build is provided as reathing_led.hex in TI/Intel HEX format. The matching CCS output is Debug/breathing_led.out. Rebuild and regenerate the HEX after any source or SysConfig changes.
+占空比由源码中的渐变循环改变，PWM 周期和分频来自 SysConfig。下载后是否达到预期呼吸效果，需要在实际天猛星板上确认。

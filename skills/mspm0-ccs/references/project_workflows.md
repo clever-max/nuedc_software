@@ -132,8 +132,8 @@ If multiple `.syscfg` files, tools, or SDK products are plausible, select one ex
 
 ```powershell
 python scripts\run_sysconfig.py <project-dir> `
-  --tool C:\ti\sysconfig_1.28.0\sysconfig_cli.bat `
-  --product C:\ti\mspm0_sdk_2_11_00_07\.metadata\product.json
+  --tool {sysconfig-install-dir}\sysconfig_cli.bat `
+  --product {mspm0-sdk-install-dir}\.metadata\product.json
 ```
 
 An explicit tool or product may differ from the project declaration. The wrapper permits that intentional override but reports the mismatch. Without an explicit override, a project that declares SysConfig 1.26.2 must not silently switch to an installed 1.28.0.
@@ -223,7 +223,7 @@ Use sources in this order:
 Search local SDK examples and module metadata with:
 
 ```powershell
-python scripts\index_syscfg_examples.py C:\ti\mspm0_sdk_2_10_00_04 --board LP_MSPM0G3507 --module UART
+python scripts\index_syscfg_examples.py {mspm0-sdk-install-dir} --board LP_MSPM0G3507 --module UART
 ```
 
 Useful SDK paths:

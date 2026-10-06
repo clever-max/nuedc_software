@@ -43,7 +43,7 @@ The Tianmengxing schematic labels the 8-pin H8 connector as follows. Pins 1/2 ar
 | 7 | LCD_CS | PB14 | TIMA0_C0 (also other mux options) |
 | 8 | BLK | PB26 | TIMG6_C0 / TIMA1_C0 |
 
-For a dual AT8236 bridge needing four PWM inputs, H8 pins 3-6 provide two convenient timer-channel pairs: PB9/PB8 on TIMA0_C1/C0 and PB10/PB11 on TIMG8_C0/C1. Pins 7/8 also have timer mux options, but pins 3-6 make the two direct channel pairs used by the current car project. This repurposes LCD signal lines; disconnect the display while using them for motor control. Verify the current project's `.syscfg` and the actual H8 resistor population before wiring.
+For a dual AT8236 bridge needing four PWM inputs, H8 pins 3-6 provide two convenient timer-channel pairs: PB9/PB8 on TIMA0_C1/C0 and PB10/PB11 on TIMG8_C0/C1. This is a board-reference option from an older wiring study, not the active `car` project mapping. The active `car` project uses PA0/PA1/PA8/PA9; always verify the project `.syscfg` and the actual H8 resistor population before wiring.
 
 ## Existing workspace knowledge
 

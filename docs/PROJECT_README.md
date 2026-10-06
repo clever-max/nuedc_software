@@ -1,38 +1,23 @@
-# empty MSPM0G3507 Example Project
+# `empty` 基线工程说明
 
-## Project role
+## 工程角色
 
-This directory is the first example project for the `nuedc_software` code-management repository.
-It is a CCS Theia project for the MSPM0G3507 LaunchPad and currently provides the smallest verified
-MSPM0 baseline: SysConfig initialization and onboard LED1 control.
+`empty/` 是工作区的最小 MSPM0G3507 CCS Theia 工程，用于验证 SysConfig、DriverLib、B21 按键和板载 PB22 LED。它不是当前 `car` 工程，也不包含电机、编码器或闭环控制。
 
-## Toolchain
+## 工具链
 
-- Device: MSPM0G3507
-- Board: LP_MSPM0G3507
-- IDE: Code Composer Studio Theia
-- Compiler: TI Arm Clang
-- SDK: MSPM0 SDK 2.11.00.07
-- Debug configuration: `targetConfigs/MSPM0G3507.ccxml`
+- 器件：MSPM0G3507，LQFP-64(PM)
+- 板卡：天猛星 MSPM0G3507
+- 编译器：TI Arm Clang
+- SDK：MSPM0 SDK 2.11.0.07
+- 目标配置：`empty/targetConfigs/MSPM0G3507.ccxml`
+- 配置源：`empty/empty.syscfg`
 
-## Repository conventions
+## 当前状态
 
-- Keep `empty.syscfg` as the source of truth for pins, clocks, peripherals, DMA, and interrupts.
-- Do not hand-edit SysConfig generated files.
-- Keep application logic in the planned `app/`, `bsp/`, `control/`, and `protocol/` layers.
-- Put test notes, hardware mappings, calibration records, and acceptance results under `docs/`.
-- Keep build output, generated files, and local IDE state out of Git.
-- Use one feature or hardware change per commit.
+- CCS 工程和 SysConfig 配置已存在。
+- `empty.c` 已实现 B21 低电平有效读取和 PB22 LED 控制。
+- `empty.hex` 已提供为 Intel HEX 镜像。
+- 电机、编码器、UART 参数协议和闭环运动控制不属于本工程当前功能。
 
-## Current status
-
-- [x] CCS project imports
-- [x] SysConfig generation
-- [x] MSPM0G3507 compilation and linking
-- [x] Onboard LED1 application code
-- [ ] Motor driver and PWM bring-up
-- [ ] Encoder sampling
-- [ ] UART parameter and telemetry protocol
-- [ ] Closed-loop motion control
-
-The macro-level development plan is in `DEVELOPMENT_PLAN.md` in this directory.
+修改配置后先运行共享静态检查和 SysConfig 生成，再报告编译、链接、烧录和实物验证结果。

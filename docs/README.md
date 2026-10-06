@@ -1,24 +1,24 @@
-# Project Documentation
+# 工作区文档索引
 
-Use this directory for information that must remain understandable outside the source code.
+## 工程说明
 
-## Core documents
+- `../car/README.md`：当前小车工程的事实、接线和串口操作。
+- `../open_loop_motor_test/README.md`：独立双电机开环测试。
+- `../photoresistor_uart/README.md`：LM393 光敏模块 ADC/UART 工程。
+- `../breathing_led/README.md`：板载 LED 呼吸灯工程。
+- `../empty/README.md`、`../button_led_test/README.md`：按键/LED 最小工程。
 
-- `ALGORITHM_AND_LEARNING_GUIDE.md`: beginner-friendly algorithm, architecture, control, testing, and AI collaboration guide
-- `DEVELOPMENT_PLAN.md`: team organization, milestones, repository workflow, and project completion criteria
-- `PROJECT_README.md`: current example project role, toolchain, and status
-- `reference/LP-MSPM0G3507/INDEX.md`: local offline reference cache for the LaunchPad board
-- `reference/Tianmengxing/INDEX.md`: shared, searchable Tianmengxing MSPM0G3507 schematic, pin map, TI references, and example-code library
-- `reference/sensors/INDEX.md`: shared NCHD1 multi-channel grayscale sensor, NCHD12 I²C examples, PCA9555, and MPU6050 schematic references
+## 规划与学习
 
-## Planned documents
+- `DEVELOPMENT_PLAN.md`：从 MSPM0 基线到智能车的规划，属于计划文档，不代表所有功能已实现。
+- `ALGORITHM_AND_LEARNING_GUIDE.md`：算法和工程学习资料，其中示例参数必须以当前项目配置为准。
+- `PROJECT_README.md`：`empty` 基线工程的角色和状态。
 
-- `hardware_interface.md`: frozen pin map, voltage levels, connectors, and peripheral ownership
-- `power_and_safety.md`: battery, regulators, motor protection, emergency stop, and laser safety
-- `mechanical_constraints.md`: chassis dimensions, wheel geometry, sensor mounting, and parking clearances
-- `calibration.md`: sensor and motor calibration procedures with recorded parameters
-- `test_plan.md`: repeatable test cases, acceptance criteria, and test results
-- `protocol.md`: UART command, telemetry, parameter storage, and versioning rules
+## 本地参考
 
-Do not store temporary screenshots, raw build logs, or unreviewed data here. Put large test data in a
-separate artifact location and record its identifier and purpose in the relevant test document.
+- `reference/LP-MSPM0G3507/INDEX.md`：LaunchPad 资料索引。
+- `reference/Tianmengxing/INDEX.md`：天猛星板卡、TI 文档和示例索引。
+- `reference/sensors/INDEX.md`：NCHD1/NCHD12 和 MPU6050 参考资料。
+- `tmx-mspm0g3507-wiki-summary.md`：Wiki 摘要。
+
+`docs/reference/` 下的 PDF 文本、供应商示例和网页缓存是只读参考快照；快照中的接线、版本和绝对路径不自动适用于当前工程。

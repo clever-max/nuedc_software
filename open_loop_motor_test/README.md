@@ -1,21 +1,18 @@
-# Open-loop motor test
+# `open_loop_motor_test` 独立电机开环测试
 
-This is an independent copy of the `car` project for isolating the motor driver.
-The original `car` directory is not modified by this test firmware.
+本工程从 `car` 项目分离，用于单独确认 AT8236 和双电机方向，不读取编码器、灰度传感器、MPU6050 或 JY61S。
 
-## Behavior
+## 行为
 
-- B21 or `RUN15`/`RUNPID` starts both motors with a fixed signed command of `250/1000`.
-- The motors run for 5 seconds, then both PWM inputs are cleared.
-- `STOP` or a second B21 press stops immediately.
-- Encoder, wheel PID, gray sensor, MPU6050 and JY61S data are not read by the active app.
+- 按 B21，或通过 UART1 发送 `RUN15`/`RUNPID`，以左右轮有符号命令 `250/1000` 启动。
+- 持续 5 秒后自动滑行停止。
+- 运行中再次按 B21 或发送 `STOP`，立即滑行停止。
+- UART1 为 115200-8-N-1：PB4 为 MCU TX，PB5 为 MCU RX。
 
-## Wiring
+## 接线
 
-Use the existing AT8236 wiring: AIN1/AIN2/BIN1/BIN2 on PA0/PA1/PA8/PA9, common ground and 12 V motor supply.
-Keep the wheels lifted for the first test.
+沿用 AT8236 的四路逻辑输入：AIN1/AIN2/BIN1/BIN2 分别接 PA0/PA1/PA8/PA9，共地，电机电源按驱动模块要求接入。首次测试应架空车轮并限流。
 
-## Firmware
+## 镜像
 
-Flash [`car.hex`](car.hex). UART1 debug is 115200-8-N-1 on PB4/PB5.
-
+`car.hex` 是本工程的 Intel HEX 镜像。修改源码或 `car.syscfg` 后必须重新生成镜像；不要把主工程 `car/car.hex` 当作本测试工程的输出。
