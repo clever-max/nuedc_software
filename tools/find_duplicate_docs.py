@@ -113,7 +113,7 @@ def write_report(root: Path, output: Path) -> None:
     lines.extend([
         "## Known high-confidence actions",
         "",
-        "- The two NCHD1 manual PDFs with different filenames have identical content; keep the ASCII-named copy and retain the other name only as a provenance alias if an index references it.",
+        "- The duplicate NCHD1 manual PDF and extracted-text filename have been removed; the ASCII-named canonical pair remains.",
         "- The NCHD12 MSPM0G3507 example under `sensors/NCHD1_I2C/` duplicates the filtered snapshot under `sensors/examples/nchd12_mspm0g3507/` for many source/configuration files. Keep the filtered searchable snapshot as the canonical example and review the larger archive before deletion.",
         "- Repeated Tianmengxing example startup files, linker scripts, and README templates are usually intentional per-example snapshots; do not delete them solely because their hashes match.",
         "- LP-MSPM0G3507 ODB/manufacturing outputs contain many repeated generated files; treat each production package as a unit and do not delete individual files from it.",
@@ -122,6 +122,7 @@ def write_report(root: Path, output: Path) -> None:
         "",
         f"- Exact groups classified as repeated templates or generated/vendor support: `{len(duplicate_groups) - len(candidate_groups)}`.",
         "- These are reported for awareness but are not deletion candidates without checking the owning example or production package.",
+        "- Deleted documentation copies are recorded in `docs/logs/DUPLICATE_CLEANUP_20261007.md`.",
         "",
     ])
     output.write_text("\n".join(lines), encoding="utf-8")

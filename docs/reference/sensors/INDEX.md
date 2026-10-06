@@ -24,4 +24,4 @@
 - [car 接线说明](../../../car/docs/analysis/wiring.md)
 - [car MPU6050 说明](../../../car/docs/analysis/MPU6050_notes.md)
 
-`examples/` 和 `text/` 中的内容保留原始资料上下文；其中的板卡、引脚、工具版本和安装路径不能直接当作当前工程事实。
+`examples/` 是当前可检索的 canonical 示例；历史资料包 `NCHD1_I2C/` 只作为待整理归档，不作为项目当前实现入口。`text/` 中的内容保留原始资料上下文；其中的板卡、引脚、工具版本和安装路径不能直接当作当前工程事实。

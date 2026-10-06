@@ -1,0 +1,8 @@
+path,kind,source,status,notes
+docs/reference/Tianmengxing/INDEX.md,board-reference,workspace-supplied,canonical,"Tianmengxing board, schematic, pin map and TI extracts"
+docs/reference/LP-MSPM0G3507/INDEX.md,board-reference,workspace-supplied,canonical,"LP-MSPM0G3507 reference; keep separate from Tianmengxing"
+docs/reference/sensors/NCHD1/NCHD1_user_manual_20230119.pdf,datasheet,vendor-supplied,canonical,"NCHD1 grayscale sensor manual; duplicate filename removed"
+docs/reference/sensors/text/NCHD1_user_manual_20230119.txt,extracted-text,local-extraction,canonical,"Searchable text corresponding to the canonical manual"
+docs/reference/sensors/examples/nchd12_mspm0g3507,example,vendor-supplied,canonical,"Filtered MSPM0G3507 NCHD12 example snapshot"
+docs/reference/sensors/NCHD1_I2C,example-archive,vendor-supplied,pending-review,"Large legacy archive; not a current project source"
+docs/reference/sensors/MPU6050,schematic,vendor-supplied,canonical,"MPU6050 reference hardware"

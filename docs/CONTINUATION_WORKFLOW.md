@@ -69,6 +69,15 @@ python tools/project_context.py guard car
 5. 推送标签并创建 GitHub Release，附上该提交生成的 HEX；在状态文件记录标签、Release 链接和 SHA256。
 6. 新对话默认从当前分支继续；需要复现稳定版本时明确切换到状态文件记录的标签。
 
+## 资料入库和清理
+
+1. 新 PDF、数据手册、压缩包先进入 `docs/reference/00_inbox/` 或在 manifest 中标为 `pending-review`。
+2. 先记录来源、版本、适用板卡和 SHA256，再抽取文本和建立索引。
+3. 运行 `python tools/find_duplicate_docs.py`，只把完全相同内容作为候选，不把相似文件自动判为重复。
+4. 保留 canonical 原始手册、搜索文本和有独立板卡上下文的示例；重复文件先记录在 `docs/logs/`，再删除或移入 `99_quarantine/`。
+5. SDK、启动文件、链接脚本和 ODB 生产文件属于示例/制造包内部内容，不能仅凭 SHA256 相同就删除。
+6. 删除后重新生成 `docs/reference/DOCUMENT_DUPLICATES.md`，更新 `docs/reference/manifests/reference_sources.csv`，并用单独提交记录清理。
+
 ## 状态文件字段约定
 
 - **Current objective**：本阶段用户目标。
