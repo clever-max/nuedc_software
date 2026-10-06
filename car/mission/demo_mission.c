@@ -23,6 +23,7 @@
 #define STRAIGHT_MIN_MS               (1000U)
 #define LINE_ONLY_DURATION_MS         (30000U)
 #define REFERENCE_BASE_SPEED_MM_S     (160.0f)
+#define REFERENCE_SPEED_RAMP_MM_S2    (400.0f)
 #define REFERENCE_WHEEL_BASE_MM       (45.0f)
 #define REFERENCE_TRACK_KP            (100.0f)
 #define REFERENCE_TRACK_KI            (0.15f)
@@ -60,6 +61,7 @@ static uint16_t s_gray_bits;
 static float s_previous_line_error;
 static float s_reference_integral;
 static int8_t s_reference_error_last;
+static float s_reference_base_speed;
 static int32_t s_speed_a_mm_s;
 static int32_t s_speed_b_mm_s;
 
@@ -154,8 +156,13 @@ static void updateReferenceLineOutput(float dt_s, float position, bool valid)
 
     /* 参考仓库用 mrad/s 量级的转向量，这里保留同样的 0.001 缩放。 */
     spin_term = 0.001f * REFERENCE_WHEEL_BASE_MM * turn;
-    target_a = REFERENCE_BASE_SPEED_MM_S - spin_term;
-    target_b = REFERENCE_BASE_SPEED_MM_S + spin_term;
+    if (s_reference_base_speed < REFERENCE_BASE_SPEED_MM_S) {
+        s_reference_base_speed += REFERENCE_SPEED_RAMP_MM_S2 * dt_s;
+        if (s_reference_base_speed > REFERENCE_BASE_SPEED_MM_S)
+            s_reference_base_speed = REFERENCE_BASE_SPEED_MM_S;
+    }
+    target_a = s_reference_base_speed - spin_term;
+    target_b = s_reference_base_speed + spin_term;
     WheelSpeedController_SetTargets(&s_wheel_controller, target_a, target_b);
     WheelSpeedController_Update(&s_wheel_controller,
         (float)s_speed_a_mm_s, (float)s_speed_b_mm_s, dt_s,
@@ -195,6 +202,7 @@ static void resetMissionVariables(void)
     s_previous_line_error = 0.0f;
     s_reference_integral = 0.0f;
     s_reference_error_last = 0;
+    s_reference_base_speed = 0.0f;
     s_speed_a_mm_s = 0;
     s_speed_b_mm_s = 0;
 }
