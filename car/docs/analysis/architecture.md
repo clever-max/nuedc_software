@@ -10,7 +10,7 @@ car.c
        -> mission/demo_mission.c 30 秒灰度循迹状态机
             -> control/wheel_speed_controller.c  左右轮速度 PID
             -> bsp/motor_pwm.c  输出 AT8236 四路 PWM
-       -> protocol/serial_console.c  UART1 命令与遥测
+       -> protocol/serial_console.c  板载 UART0 命令与遥测
        -> bsp/buzzer.c          PB27 提示音
 ```
 

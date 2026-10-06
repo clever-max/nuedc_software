@@ -58,6 +58,9 @@ static float s_line_error;
 static float s_line_integral;
 static bool s_line_valid;
 static uint16_t s_gray_bits;
+static bool s_gray_bus_ok;
+static uint8_t s_gray_bus_stage;
+static uint8_t s_gray_write_address;
 static float s_previous_line_error;
 static float s_reference_integral;
 static int8_t s_reference_error_last;
@@ -199,6 +202,9 @@ static void resetMissionVariables(void)
     s_line_integral = 0.0f;
     s_line_valid = false;
     s_gray_bits = 0U;
+    s_gray_bus_ok = false;
+    s_gray_bus_stage = 0U;
+    s_gray_write_address = 0x40U;
     s_previous_line_error = 0.0f;
     s_reference_integral = 0.0f;
     s_reference_error_last = 0;
@@ -269,7 +275,8 @@ void DemoMission_RequestStop(void)
 void DemoMission_Update(uint32_t now_tick, float dt_s,
     int32_t speed_a_mm_s, int32_t speed_b_mm_s,
     float yaw_deg, float yaw_rate_deg_s, bool gyro_ready,
-    float line_error, bool line_valid, uint16_t gray_bits)
+    float line_error, bool line_valid, uint16_t gray_bits,
+    bool gray_bus_ok, uint8_t gray_bus_stage, uint8_t gray_write_address)
 {
     uint32_t elapsed_ms;
     float signed_rate;
@@ -282,6 +289,9 @@ void DemoMission_Update(uint32_t now_tick, float dt_s,
     s_line_error = line_error;
     s_line_valid = line_valid;
     s_gray_bits = gray_bits;
+    s_gray_bus_ok = gray_bus_ok;
+    s_gray_bus_stage = gray_bus_stage;
+    s_gray_write_address = gray_write_address;
 
     /* 空闲、完成或中止状态持续写入零 PWM，防止外设复位后的残留输出。 */
     if (s_state == DEMO_MISSION_IDLE || s_state == DEMO_MISSION_DONE ||
@@ -376,6 +386,9 @@ void DemoMission_GetSnapshot(uint32_t now_tick, float yaw_deg,
     snapshot->line_error = s_line_error;
     snapshot->line_valid = s_line_valid;
     snapshot->gray_bits = s_gray_bits;
+    snapshot->gray_bus_ok = s_gray_bus_ok;
+    snapshot->gray_bus_stage = s_gray_bus_stage;
+    snapshot->gray_write_address = s_gray_write_address;
     snapshot->speed_a_mm_s = s_speed_a_mm_s;
     snapshot->speed_b_mm_s = s_speed_b_mm_s;
     snapshot->command_a_permille = BspMotor_GetACommand();

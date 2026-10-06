@@ -16,13 +16,17 @@
 #define GRAY_SCL_IOMUX           (GRAY_SENSOR_BUS_GRAY_SCL_IOMUX)
 #define GRAY_SDA_IOMUX           (GRAY_SENSOR_BUS_GRAY_SDA_IOMUX)
 #define GRAY_PORT                (GRAY_SENSOR_BUS_PORT)
-#define GRAY_WRITE_ADDRESS       (0x40U)
-#define GRAY_READ_ADDRESS        (0x41U)
+#define GRAY_DEFAULT_WRITE_ADDRESS (0x40U)
 #define GRAY_INPUT_REGISTER      (0x00U)
 #define GRAY_DELAY_CYCLES        (CPUCLK_FREQ / 200000U)
+#define GRAY_ADDRESS_COUNT       (8U)
+#define GRAY_ADDRESS_STEP        (2U)
 
 static float s_last_position;
 static uint16_t s_last_bits;
+static uint8_t s_write_address;
+static uint8_t s_bus_stage;
+static bool s_bus_ready;
 
 static void delayI2c(void)
 {
@@ -131,6 +135,44 @@ static uint8_t readByte(bool acknowledge)
     return value;
 }
 
+static void fillSample(GraySensorSample *sample, bool valid,
+    uint16_t bits, float position)
+{
+    sample->bits = bits;
+    sample->position = position;
+    sample->valid = valid;
+    /* 只有完整读事务走到数据阶段，才把总线报告为 OK；地址探测成功
+     * 不能代替后续寄存器读事务的 ACK。 */
+    sample->bus_ok = s_bus_stage == 4U;
+    sample->bus_stage = s_bus_stage;
+    sample->write_address = s_write_address;
+}
+
+static bool probeAddress(uint8_t write_address)
+{
+    bool acknowledged;
+    i2cStart();
+    acknowledged = writeByte(write_address);
+    i2cStop();
+    return acknowledged;
+}
+
+static bool findDeviceAddress(void)
+{
+    uint8_t index;
+    /* PCA9555 的 A0/A1/A2 形成 0x20~0x27，按 8 位写地址扫描 0x40~0x4E。 */
+    for (index = 0U; index < GRAY_ADDRESS_COUNT; ++index) {
+        uint8_t candidate = (uint8_t)(GRAY_DEFAULT_WRITE_ADDRESS +
+            index * GRAY_ADDRESS_STEP);
+        if (probeAddress(candidate)) {
+            s_write_address = candidate;
+            return true;
+        }
+    }
+    s_write_address = GRAY_DEFAULT_WRITE_ADDRESS;
+    return false;
+}
+
 static float positionFromBits(uint16_t bits)
 {
     /*
@@ -154,9 +196,15 @@ void BspGraySensor_Init(void)
 {
     s_last_bits = 0U;
     s_last_position = 0.0f;
+    s_write_address = GRAY_DEFAULT_WRITE_ADDRESS;
+    s_bus_stage = 0U;
+    s_bus_ready = false;
     sdaRelease();
     sclOutput(true);
     i2cStop();
+    /* 与供应商例程的 i2c_CheckDevice(0x40) 对齐，同时兼容 A0~A2 改址。 */
+    s_bus_ready = findDeviceAddress();
+    s_bus_stage = s_bus_ready ? 0U : 1U;
 }
 
 bool BspGraySensor_Read(GraySensorSample *sample)
@@ -167,23 +215,35 @@ bool BspGraySensor_Read(GraySensorSample *sample)
     bool valid;
     if (sample == 0) return false;
 
+    /* 复位后若初始化时没有找到器件，不在每个 5 ms 周期重复扫描。 */
+    if (!s_bus_ready) {
+        s_bus_stage = 1U;
+        fillSample(sample, false, s_last_bits, s_last_position);
+        return false;
+    }
+
     /* PCA9555 输入寄存器 0x00、0x01 连读，低 12 位对应有效通道。 */
     i2cStart();
-    if (!writeByte(GRAY_WRITE_ADDRESS) || !writeByte(GRAY_INPUT_REGISTER)) {
+    if (!writeByte(s_write_address)) {
+        s_bus_stage = 1U;
         i2cStop();
-        sample->bits = s_last_bits;
-        sample->position = s_last_position;
-        sample->valid = false;
+        fillSample(sample, false, s_last_bits, s_last_position);
+        return false;
+    }
+    if (!writeByte(GRAY_INPUT_REGISTER)) {
+        s_bus_stage = 2U;
+        i2cStop();
+        fillSample(sample, false, s_last_bits, s_last_position);
         return false;
     }
     i2cStart();
-    if (!writeByte(GRAY_READ_ADDRESS)) {
+    if (!writeByte((uint8_t)(s_write_address | 0x01U))) {
+        s_bus_stage = 3U;
         i2cStop();
-        sample->bits = s_last_bits;
-        sample->position = s_last_position;
-        sample->valid = false;
+        fillSample(sample, false, s_last_bits, s_last_position);
         return false;
     }
+    s_bus_stage = 4U;
     low = readByte(true);
     high = readByte(false);
     i2cStop();
@@ -194,8 +254,6 @@ bool BspGraySensor_Read(GraySensorSample *sample)
         s_last_bits = bits;
         s_last_position = positionFromBits(bits);
     }
-    sample->bits = bits;
-    sample->position = s_last_position;
-    sample->valid = valid;
+    fillSample(sample, valid, bits, s_last_position);
     return true;
 }

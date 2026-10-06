@@ -27,6 +27,9 @@ typedef struct {
     float line_error;
     bool line_valid;
     uint16_t gray_bits;
+    bool gray_bus_ok;
+    uint8_t gray_bus_stage;
+    uint8_t gray_write_address;
     int32_t speed_a_mm_s;
     int32_t speed_b_mm_s;
     int16_t command_a_permille;
@@ -42,7 +45,8 @@ void DemoMission_RequestStop(void);
 void DemoMission_Update(uint32_t now_tick, float dt_s,
     int32_t speed_a_mm_s, int32_t speed_b_mm_s,
     float yaw_deg, float yaw_rate_deg_s, bool gyro_ready,
-    float line_error, bool line_valid, uint16_t gray_bits);
+    float line_error, bool line_valid, uint16_t gray_bits,
+    bool gray_bus_ok, uint8_t gray_bus_stage, uint8_t gray_write_address);
 void DemoMission_GetSnapshot(uint32_t now_tick, float yaw_deg,
     float yaw_rate_deg_s, bool gyro_ready, DemoMissionSnapshot *snapshot);
 

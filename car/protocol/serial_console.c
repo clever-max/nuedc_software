@@ -7,7 +7,7 @@
 
 #define COMMAND_CAPACITY (24U)
 
-/* UART1 接收只组装换行命令；命令含义在前台 App_RunOnce 中执行。 */
+/* 板载 UART0 接收只组装换行命令；命令含义在前台 App_RunOnce 中执行。 */
 static volatile char s_rx_buffer[COMMAND_CAPACITY];
 static volatile uint8_t s_rx_length;
 static volatile bool s_command_ready;
@@ -31,6 +31,13 @@ static void putHex16(uint16_t value)
     static const char digits[] = "0123456789ABCDEF";
     putChar(digits[(value >> 12) & 0x0FU]);
     putChar(digits[(value >> 8) & 0x0FU]);
+    putChar(digits[(value >> 4) & 0x0FU]);
+    putChar(digits[value & 0x0FU]);
+}
+
+static void putHex8(uint8_t value)
+{
+    static const char digits[] = "0123456789ABCDEF";
     putChar(digits[(value >> 4) & 0x0FU]);
     putChar(digits[value & 0x0FU]);
 }
@@ -69,7 +76,7 @@ void SerialConsole_Init(void)
 {
     s_rx_length = 0U;
     s_command_ready = false;
-    SerialConsole_WriteText("NCHD12 gray line demo UART1 115200 8N1\r\n");
+    SerialConsole_WriteText("NCHD12 gray line demo onboard UART0 115200 8N1\r\n");
     SerialConsole_WriteText("B21/RUNPID/RUN15: gray line 30s; STOP aborts\r\n");
     SerialConsole_WriteText("MPU6050 disabled; encoder speed PID active\r\n");
 }
@@ -116,6 +123,13 @@ void SerialConsole_PrintTelemetry(const DemoMissionSnapshot *snapshot)
     SerialConsole_WriteText(" line="); putFixed1(snapshot->line_error);
     SerialConsole_WriteText(snapshot->line_valid ? "(OK)" : "(LOST)");
     SerialConsole_WriteText(" gray=0x"); putHex16(snapshot->gray_bits);
+    SerialConsole_WriteText(" gray_bus=");
+    if (snapshot->gray_bus_ok) SerialConsole_WriteText("OK");
+    else {
+        SerialConsole_WriteText("NACK");
+        putU32(snapshot->gray_bus_stage);
+    }
+    SerialConsole_WriteText(" gray_addr=0x"); putHex8(snapshot->gray_write_address);
     SerialConsole_WriteText(" yaw="); putFixed1(snapshot->yaw_deg);
     SerialConsole_WriteText(" target_yaw="); putFixed1(snapshot->target_yaw_deg);
     SerialConsole_WriteText(" yaw_rate="); putFixed1(snapshot->yaw_rate_deg_s);

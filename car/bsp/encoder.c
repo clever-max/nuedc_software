@@ -13,7 +13,9 @@
 #define HALL_ENCODER_PPR               (13.0f)
 #define COUNTS_PER_WHEEL_REV           (HALL_ENCODER_PPR * GEAR_RATIO)
 #define MM_PER_ENCODER_COUNT           (3.14159265358979323846f * WHEEL_DIAMETER_MM / COUNTS_PER_WHEEL_REV)
-#define ENCODER_A_B_HIGH_IS_FORWARD     (1)
+/* 依据供应商 AT8236 例程和当前电机安装方向，左轮 A 上升沿时 B 低为正。 */
+#define ENCODER_A_B_HIGH_IS_FORWARD     (0)
+/* 右轮 A 上升沿时 B 高为正。 */
 #define ENCODER_B_B_HIGH_IS_FORWARD     (1)
 #define DEFAULT_SAMPLE_PERIOD_S        (0.005f)
 #define SPEED_MEASURE_WINDOW_S         (0.020f)

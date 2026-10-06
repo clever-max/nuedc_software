@@ -132,7 +132,8 @@ void App_RunOnce(void)
             &position_a, &position_b);
         BspGraySensor_Read(&gray);
         DemoMission_Update(s_control_ticks, dt_s, speed_a, speed_b,
-            0.0f, 0.0f, false, gray.position, gray.valid, gray.bits);
+            0.0f, 0.0f, false, gray.position, gray.valid, gray.bits,
+            gray.bus_ok, gray.bus_stage, gray.write_address);
         BspBuzzer_Update();
     }
     if (s_telemetry_due) {
