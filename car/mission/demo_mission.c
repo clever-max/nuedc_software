@@ -16,14 +16,14 @@
 #define CONTROL_PERIOD_MS             (5U)
 #define ROUTE_TIMEOUT_MS              (900000U)
 #define CURVE_TARGET_DEG              (170.0f)
-#define CURVE_SPEED_MM_S              (220.0f)
-#define STRAIGHT_SPEED_MM_S           (320.0f)
+#define CURVE_SPEED_MM_S              (180.0f)
+#define STRAIGHT_SPEED_MM_S           (240.0f)
 #define CURVE_START_RATE_DEG_S        (8.0f)
 #define CURVE_ENTRY_CONFIRM_MS        (150U)
 #define STRAIGHT_MIN_MS               (1000U)
 #define LINE_ONLY_DURATION_MS         (30000U)
-#define REFERENCE_BASE_SPEED_MM_S     (320.0f)
-#define REFERENCE_SPEED_RAMP_MM_S2    (800.0f)
+#define REFERENCE_BASE_SPEED_MM_S     (200.0f)
+#define REFERENCE_SPEED_RAMP_MM_S2    (600.0f)
 #define REFERENCE_WHEEL_BASE_MM       (45.0f)
 #define REFERENCE_TRACK_KP            (100.0f)
 #define REFERENCE_TRACK_KI            (0.15f)
@@ -159,7 +159,7 @@ static void updateReferenceLineOutput(float dt_s, float position, bool valid)
         REFERENCE_TRACK_KI * s_reference_integral +
         (float)(error - s_reference_error_last) * REFERENCE_TRACK_KD;
     s_reference_error_last = error;
-    /* 高速档的直角/锐角不能只靠固定小差速：误差越大，越快降低内侧轮，
+    /* 稳定性验证档的直角/锐角不能只靠固定小差速：误差越大，越快降低内侧轮，
      * 最大误差允许内侧轮反转，帮助车体绕过尖角后重新捕线。 */
     turn_scale = REFERENCE_TURN_SCALE;
     if (fabsf((float)error) >= 10.0f) turn_scale = REFERENCE_TURN_SCALE_CORNER;
