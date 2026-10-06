@@ -59,3 +59,7 @@ docs/reference/LP-MSPM0G3507/text/
 # Local document rendering output
 **/docx_review/
 **/rendered/
+
+
+# Temp Chatlog
+temp/
