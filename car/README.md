@@ -70,4 +70,4 @@ UART1 参数为 115200-8-N-1，命令以换行结束：
 
 详细说明见 [文档索引](docs/README.md)。
 
-使用 `powershell -ExecutionPolicy Bypass -File car/tools/build_validate_hex.ps1 -Clean` 重新生成 `car.hex`。脚本生成后强制执行 Intel HEX 校验和与 MSPM0 BSL 8 字节地址/长度对齐检查，校验失败时不报告构建完成。
+设置 `CCS_INSTALL_DIR` 后，使用 `powershell -ExecutionPolicy Bypass -File car/tools/build_validate_hex.ps1 -Clean` 重新生成 `car.hex`。脚本生成后强制执行 Intel HEX 校验和与 MSPM0 BSL 8 字节地址/长度对齐检查，校验失败时不报告构建完成。

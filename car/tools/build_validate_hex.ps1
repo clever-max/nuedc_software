@@ -1,8 +1,13 @@
 param([switch]$Clean)
 $ErrorActionPreference = "Stop"
 $workspace = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$ccsGmake = "D:\TI\CCS\ccs\utils\bin\gmake.exe"
-$hexTool = "D:\TI\CCS\ccs\tools\compiler\ti-cgt-armllvm_5.1.1.LTS\bin\tiarmhex.exe"
+$ccsRoot = $env:CCS_INSTALL_DIR
+if ([string]::IsNullOrWhiteSpace($ccsRoot)) { throw "Set CCS_INSTALL_DIR to the CCS installation directory" }
+$ccsGmake = Join-Path $ccsRoot "ccs\utils\bin\gmake.exe"
+$compilerRoot = Get-ChildItem (Join-Path $ccsRoot "ccs\tools\compiler") -Directory -Filter "ti-cgt-armllvm_*" |
+    Sort-Object Name -Descending | Select-Object -First 1
+if ($null -eq $compilerRoot) { throw "TI ARM Clang compiler not found under CCS_INSTALL_DIR" }
+$hexTool = Join-Path $compilerRoot.FullName "bin\tiarmhex.exe"
 $projectDir = Join-Path $workspace "car"
 $debugDir = Join-Path $projectDir "Debug"
 $hexPath = Join-Path $projectDir "car.hex"
