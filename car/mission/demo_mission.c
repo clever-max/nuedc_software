@@ -31,10 +31,10 @@
 #define REFERENCE_TRACK_INTEGRAL_MAX  (200.0f)
 #define REFERENCE_TURN_SCALE          (1.5f)
 
-#define WHEEL_PID_KP                  (1.50f)
+#define WHEEL_PID_KP                  (0.80f)
 #define WHEEL_PID_KI                  (0.00f)
 #define WHEEL_PID_KD                  (0.00f)
-#define WHEEL_PID_FEED_FORWARD        (0.00f)
+#define WHEEL_PID_FEED_FORWARD        (1.00f)
 #define LINE_PID_KP                   (4.0f)
 #define LINE_PID_KI                   (0.0f)
 #define LINE_PID_KD                   (0.02f)
