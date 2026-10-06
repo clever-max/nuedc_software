@@ -2,12 +2,12 @@
 #include "motor_pwm.h"
 
 /* AT8236 使用两输入 PWM：一侧保持满占空比，另一侧用互补占空比表达
- * 方向和幅值。用户已确认两台电机同向输入时轮胎同向，因此两个通道
- * 使用相同的正方向逻辑；不要按常规镜像安装的假设反相 Motor B。 */
+ * 方向和幅值。实车架空验证表明，Motor B 必须电气反相后，正命令才
+ * 表示两轮都向前。 */
 #define PWM_PERIOD_COUNTS         (3200U)
 #define PWM_MAX_PERMILLE          (1000U)
 #define MOTOR_A_FORWARD_AIN1_HIGH (1)
-#define MOTOR_B_FORWARD_BIN1_HIGH (1)
+#define MOTOR_B_FORWARD_BIN1_HIGH (0)
 #define MOTOR_PWM_AIN1_INDEX      (DL_TIMER_CC_1_INDEX)
 #define MOTOR_PWM_AIN2_INDEX      (DL_TIMER_CC_0_INDEX)
 #define MOTOR_PWM_BIN1_INDEX      (DL_TIMER_CC_0_INDEX)
