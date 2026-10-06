@@ -72,6 +72,18 @@ static const char *stateName(DemoMissionState state)
     }
 }
 
+static const char *lineModeName(DemoLineMode mode)
+{
+    switch (mode) {
+    case DEMO_LINE_TRACK: return "TRACK";
+    case DEMO_LINE_TURN_LEFT: return "TURN_L";
+    case DEMO_LINE_TURN_RIGHT: return "TURN_R";
+    case DEMO_LINE_CROSS_PASS: return "CROSS";
+    case DEMO_LINE_LOST: return "LOST";
+    default: return "?";
+    }
+}
+
 void SerialConsole_Init(void)
 {
     s_rx_length = 0U;
@@ -122,6 +134,7 @@ void SerialConsole_PrintTelemetry(const DemoMissionSnapshot *snapshot)
     SerialConsole_WriteText(" backend="); SerialConsole_WriteText(snapshot->gyro_backend);
     SerialConsole_WriteText(" line="); putFixed1(snapshot->line_error);
     SerialConsole_WriteText(snapshot->line_valid ? "(OK)" : "(LOST)");
+    SerialConsole_WriteText(" line_mode="); SerialConsole_WriteText(lineModeName(snapshot->line_mode));
     SerialConsole_WriteText(" gray=0x"); putHex16(snapshot->gray_bits);
     SerialConsole_WriteText(" gray_bus=");
     if (snapshot->gray_bus_ok) SerialConsole_WriteText("OK");

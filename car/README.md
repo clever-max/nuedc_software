@@ -7,7 +7,7 @@
 - 上电后所有电机输入保持低电平，电机处于滑行停止状态。
 - 按 B21，或在板载 Type-C/UART0 串口发送 `RUNPID`/`RUN15`，启动 30 秒灰度循迹。
 - 每 5 ms 读取编码器和 12 路灰度传感器，灰度位置环修正左右轮目标速度，编码器速度环输出 AT8236 PWM。
-- 30 秒到时进入 `DONE` 并滑行停止；运行中再次按 B21 或发送 `STOP` 进入 `ABORT`。
+- 30 秒到时进入 `DONE` 并滑行停止；运行中再次按 B21 或发送 `STOP` 进入 `ABORT`。`LINE30` 内部还显示 `TRACK`、`TURN_L`、`TURN_R`、`CROSS`、`LOST` 五种灰度动作状态。
 - 当前版本不初始化、不读取 MPU6050；遥测中的 `gyro=OFF` 是预期状态。`MPU6050` 驱动文件保留作后续实验，不能据此宣称已完成陀螺仪路线。
 
 ## 实际接线
@@ -46,7 +46,7 @@
 | `STOP` | 请求停止并进入 `ABORT` |
 | 其他 | 返回命令提示 |
 
-遥测约每 100 ms 一行，字段包括 `state`、`gyro`、`line`、`gray`、`speed` 和 `pwm_permille`。当前正常启动横幅包含 `MPU6050 disabled` 与 `gray line 30s`。
+遥测约每 100 ms 一行，字段包括 `state`、`gyro`、`line`、`line_mode`、`gray`、`speed` 和 `pwm_permille`。当前正常启动横幅包含 `MPU6050 disabled` 与 `gray line 30s`。
 
 ## 工程结构
 
@@ -73,3 +73,4 @@
 详细说明见 [文档索引](docs/README.md)。
 
 设置 `CCS_INSTALL_DIR` 后，使用 `powershell -ExecutionPolicy Bypass -File car/tools/build_validate_hex.ps1 -Clean` 重新生成 `car.hex`。脚本生成后强制执行 Intel HEX 校验和与 MSPM0 BSL 8 字节地址/长度对齐检查，校验失败时不报告构建完成。
+

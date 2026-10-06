@@ -15,3 +15,7 @@ NCHD12：SCL→PA29，SDA→PA30，VCC→5V，GND 共地，并将输出选择区
 - 读取传感器：`../../bsp/gray_sensor.c`
 - 线路误差和目标速度：`../../mission/demo_mission.c`
 - 调度和遥测：`../../app/app.c`
+
+## 复刻版状态机
+
+`LINE30` 在原有离散误差 PID 之外增加了 NCHD12 位图特征分类：普通 TRACK、左右 TURN、CROSS 直行通过和 LOST。特征连续确认 3 个 5 ms 周期，中心线连续恢复 3 个周期后结束转弯；转弯目标由编码器速度 PID 执行。当前十字策略默认为直行，固定赛道路线需要单独维护路线表。

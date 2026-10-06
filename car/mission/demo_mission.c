@@ -31,6 +31,20 @@
 #define REFERENCE_TRACK_INTEGRAL_MAX  (200.0f)
 #define REFERENCE_TURN_SCALE          (1.5f)
 
+/* 灰度特征查表和状态机参数。NCHD12 bit0 在右侧、bit11 在左侧。 */
+#define LINE_LEFT_MASK               (0x0F00U)
+#define LINE_RIGHT_MASK              (0x000FU)
+#define LINE_CENTER_MASK             (0x00F0U)
+#define LINE_LEFT_OUTER_MASK         (0x0C00U)
+#define LINE_RIGHT_OUTER_MASK        (0x0003U)
+#define LINE_FEATURE_CONFIRM_TICKS   (3U)
+#define LINE_REACQUIRE_CONFIRM_TICKS (3U)
+#define LINE_TURN_SPEED_MM_S         (110.0f)
+#define LINE_TURN_TIMEOUT_MS         (1200U)
+#define LINE_CROSS_SPEED_MM_S        (100.0f)
+#define LINE_CROSS_MIN_MS            (120U)
+#define LINE_CROSS_TIMEOUT_MS        (1000U)
+
 #define WHEEL_PID_KP                  (0.80f)
 #define WHEEL_PID_KI                  (0.00f)
 #define WHEEL_PID_KD                  (0.00f)
@@ -61,12 +75,103 @@ static uint16_t s_gray_bits;
 static bool s_gray_bus_ok;
 static uint8_t s_gray_bus_stage;
 static uint8_t s_gray_write_address;
+static DemoLineMode s_line_mode;
+static DemoLineMode s_line_candidate;
+static uint8_t s_line_candidate_count;
+static uint8_t s_line_reacquire_count;
+static uint32_t s_line_mode_start_tick;
 static float s_previous_line_error;
 static float s_reference_integral;
 static int8_t s_reference_error_last;
 static float s_reference_base_speed;
 static int32_t s_speed_a_mm_s;
 static int32_t s_speed_b_mm_s;
+
+static uint8_t grayActiveCount(uint16_t bits)
+{
+    uint8_t count = 0U;
+    while (bits != 0U) {
+        count = (uint8_t)(count + (bits & 1U));
+        bits >>= 1U;
+    }
+    return count;
+}
+
+static DemoLineMode classifyLineFeature(uint16_t bits, float position,
+    bool valid)
+{
+    uint16_t left = bits & LINE_LEFT_MASK;
+    uint16_t center = bits & LINE_CENTER_MASK;
+    uint16_t right = bits & LINE_RIGHT_MASK;
+    uint8_t active = grayActiveCount(bits);
+
+    if (!valid || bits == 0U) return DEMO_LINE_LOST;
+    if (left != 0U && center != 0U && right != 0U && active >= 6U)
+        return DEMO_LINE_CROSS_PASS;
+    if ((bits & LINE_LEFT_OUTER_MASK) != 0U && center != 0U &&
+        right == 0U) return DEMO_LINE_TURN_LEFT;
+    if ((bits & LINE_RIGHT_OUTER_MASK) != 0U && center != 0U &&
+        left == 0U) return DEMO_LINE_TURN_RIGHT;
+    if (position >= 8.0f && (bits & LINE_LEFT_OUTER_MASK) != 0U)
+        return DEMO_LINE_TURN_LEFT;
+    if (position <= -8.0f && (bits & LINE_RIGHT_OUTER_MASK) != 0U)
+        return DEMO_LINE_TURN_RIGHT;
+    return DEMO_LINE_TRACK;
+}
+
+static bool centerLineReacquired(uint16_t bits, bool valid)
+{
+    uint16_t outer = (uint16_t)(LINE_LEFT_OUTER_MASK | LINE_RIGHT_OUTER_MASK);
+    return valid && (bits & LINE_CENTER_MASK) != 0U &&
+        (bits & outer) == 0U;
+}
+
+static void setLineMode(DemoLineMode mode, uint32_t now_tick)
+{
+    s_line_mode = mode;
+    s_line_mode_start_tick = now_tick;
+    s_line_candidate = DEMO_LINE_TRACK;
+    s_line_candidate_count = 0U;
+    s_line_reacquire_count = 0U;
+    WheelSpeedController_Reset(&s_wheel_controller);
+}
+
+static bool confirmLineFeature(DemoLineMode candidate)
+{
+    if (candidate == s_line_candidate) {
+        if (s_line_candidate_count < UINT8_MAX)
+            ++s_line_candidate_count;
+    } else {
+        s_line_candidate = candidate;
+        s_line_candidate_count = 1U;
+    }
+    return s_line_candidate_count >= LINE_FEATURE_CONFIRM_TICKS;
+}
+
+static void updateTurnOutput(float dt_s, bool left)
+{
+    int16_t command_a;
+    int16_t command_b;
+    float target_a = left ? -LINE_TURN_SPEED_MM_S : LINE_TURN_SPEED_MM_S;
+    float target_b = left ? LINE_TURN_SPEED_MM_S : -LINE_TURN_SPEED_MM_S;
+    WheelSpeedController_SetTargets(&s_wheel_controller, target_a, target_b);
+    WheelSpeedController_Update(&s_wheel_controller,
+        (float)s_speed_a_mm_s, (float)s_speed_b_mm_s, dt_s,
+        &command_a, &command_b);
+    BspMotor_SetCommand(command_a, command_b);
+}
+
+static void updateCrossOutput(float dt_s)
+{
+    int16_t command_a;
+    int16_t command_b;
+    WheelSpeedController_SetTargets(&s_wheel_controller,
+        LINE_CROSS_SPEED_MM_S, LINE_CROSS_SPEED_MM_S);
+    WheelSpeedController_Update(&s_wheel_controller,
+        (float)s_speed_a_mm_s, (float)s_speed_b_mm_s, dt_s,
+        &command_a, &command_b);
+    BspMotor_SetCommand(command_a, command_b);
+}
 
 static uint32_t elapsedStageMs(uint32_t now_tick)
 {
@@ -91,6 +196,7 @@ static void enterState(DemoMissionState state, uint32_t now_tick,
         s_target_yaw_deg = yaw_deg;
     } else if (state == DEMO_MISSION_LINE_ONLY) {
         s_target_yaw_deg = yaw_deg;
+        setLineMode(DEMO_LINE_TRACK, now_tick);
     } else {
         s_target_yaw_deg = yaw_deg;
         BspMotor_Coast();
@@ -205,6 +311,11 @@ static void resetMissionVariables(void)
     s_gray_bus_ok = false;
     s_gray_bus_stage = 0U;
     s_gray_write_address = 0x40U;
+    s_line_mode = DEMO_LINE_TRACK;
+    s_line_candidate = DEMO_LINE_TRACK;
+    s_line_candidate_count = 0U;
+    s_line_reacquire_count = 0U;
+    s_line_mode_start_tick = 0U;
     s_previous_line_error = 0.0f;
     s_reference_integral = 0.0f;
     s_reference_error_last = 0;
@@ -358,7 +469,56 @@ void DemoMission_Update(uint32_t now_tick, float dt_s,
     }
 
     if (s_state == DEMO_MISSION_LINE_ONLY) {
-        updateReferenceLineOutput(dt_s, line_error, line_valid);
+        DemoLineMode feature = classifyLineFeature(gray_bits, line_error,
+            line_valid);
+        uint32_t line_elapsed = (now_tick - s_line_mode_start_tick) *
+            CONTROL_PERIOD_MS;
+
+        if (s_line_mode == DEMO_LINE_TRACK ||
+            s_line_mode == DEMO_LINE_LOST) {
+            if (feature == DEMO_LINE_TURN_LEFT ||
+                feature == DEMO_LINE_TURN_RIGHT ||
+                feature == DEMO_LINE_CROSS_PASS) {
+                if (confirmLineFeature(feature))
+                    setLineMode(feature, now_tick);
+            } else if (feature == DEMO_LINE_TRACK) {
+                if (s_line_mode != DEMO_LINE_TRACK)
+                    setLineMode(DEMO_LINE_TRACK, now_tick);
+                updateReferenceLineOutput(dt_s, line_error, line_valid);
+            } else {
+                if (s_line_mode != DEMO_LINE_LOST)
+                    setLineMode(DEMO_LINE_LOST, now_tick);
+                BspMotor_Coast();
+            }
+        } else if (s_line_mode == DEMO_LINE_TURN_LEFT ||
+            s_line_mode == DEMO_LINE_TURN_RIGHT) {
+            updateTurnOutput(dt_s, s_line_mode == DEMO_LINE_TURN_LEFT);
+            if (centerLineReacquired(gray_bits, line_valid)) {
+                if (s_line_reacquire_count < UINT8_MAX)
+                    ++s_line_reacquire_count;
+                if (s_line_reacquire_count >= LINE_REACQUIRE_CONFIRM_TICKS)
+                    setLineMode(DEMO_LINE_TRACK, now_tick);
+            } else {
+                s_line_reacquire_count = 0U;
+            }
+            if (line_elapsed >= LINE_TURN_TIMEOUT_MS)
+                setLineMode(DEMO_LINE_TRACK, now_tick);
+        } else if (s_line_mode == DEMO_LINE_CROSS_PASS) {
+            /* 默认十字策略为直行；固定路线需要在此处再接入路线决策表。 */
+            updateCrossOutput(dt_s);
+            if (line_elapsed >= LINE_CROSS_MIN_MS &&
+                feature != DEMO_LINE_CROSS_PASS &&
+                centerLineReacquired(gray_bits, line_valid)) {
+                if (s_line_reacquire_count < UINT8_MAX)
+                    ++s_line_reacquire_count;
+                if (s_line_reacquire_count >= LINE_REACQUIRE_CONFIRM_TICKS)
+                    setLineMode(DEMO_LINE_TRACK, now_tick);
+            } else {
+                s_line_reacquire_count = 0U;
+            }
+            if (line_elapsed >= LINE_CROSS_TIMEOUT_MS)
+                setLineMode(DEMO_LINE_TRACK, now_tick);
+        }
         if (elapsed_ms >= LINE_ONLY_DURATION_MS) {
             s_state = DEMO_MISSION_DONE;
             WheelSpeedController_Reset(&s_wheel_controller);
@@ -385,6 +545,7 @@ void DemoMission_GetSnapshot(uint32_t now_tick, float yaw_deg,
     snapshot->gyro_backend = BspMpu6050_GetBackendName();
     snapshot->line_error = s_line_error;
     snapshot->line_valid = s_line_valid;
+    snapshot->line_mode = s_line_mode;
     snapshot->gray_bits = s_gray_bits;
     snapshot->gray_bus_ok = s_gray_bus_ok;
     snapshot->gray_bus_stage = s_gray_bus_stage;

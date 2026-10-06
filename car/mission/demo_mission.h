@@ -14,6 +14,14 @@ typedef enum {
     DEMO_MISSION_ABORTED
 } DemoMissionState;
 
+typedef enum {
+    DEMO_LINE_TRACK = 0,
+    DEMO_LINE_TURN_LEFT,
+    DEMO_LINE_TURN_RIGHT,
+    DEMO_LINE_CROSS_PASS,
+    DEMO_LINE_LOST
+} DemoLineMode;
+
 typedef struct {
     DemoMissionState state;
     uint32_t elapsed_ms;
@@ -26,6 +34,7 @@ typedef struct {
     const char *gyro_backend;
     float line_error;
     bool line_valid;
+    DemoLineMode line_mode;
     uint16_t gray_bits;
     bool gray_bus_ok;
     uint8_t gray_bus_stage;
