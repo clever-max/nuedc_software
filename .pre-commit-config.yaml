@@ -1,0 +1,25 @@
+minimum_pre_commit_version: "3.0.0"
+default_stages: [pre-commit, commit-msg]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: repository-workflow
+        name: repository workflow gate
+        entry: python tools/check_workflow.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: conventional-commit-message
+        name: conventional commit message
+        entry: python tools/check_commit_message.py
+        language: system
+        stages: [commit-msg]

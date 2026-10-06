@@ -1,0 +1,24 @@
+name: repository-checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  repository:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Check Python workflow tools
+        run: python -m py_compile tools/*.py
+      - name: Check workflow and documentation layout
+        run: python tools/check_workflow.py
+      - name: Check whitespace
+        run: git diff --check
+      - name: Scan reference duplicates
+        run: python tools/find_duplicate_docs.py --root docs/reference --output "$RUNNER_TEMP/DOCUMENT_DUPLICATES.md"
