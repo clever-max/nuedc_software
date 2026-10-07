@@ -11,6 +11,10 @@
 5. [MG513X 霍尔编码器说明](analysis/MG513X_Hall_notes.md)
 6. [AT8236 资料核对](analysis/AT8236_reference_notes.md)
 
+## 操作指南
+
+- [独立编译、生成和校验 HEX](how-to/build_hex.md)
+
 ## 历史和保留驱动
 
 - [MPU6050 接入说明](analysis/MPU6050_notes.md)：驱动和未来路线的记录；当前 `app/` 未调用。
