@@ -1,36 +1,34 @@
 # car project continuation state
 
 - Project: `car`
-- Status: `experimental`
-- Last handoff: `2026-10-07 10:21 +0800`
-- Stable tag: `car-stable-v1.0.0`
-- Stable commit: `9e0046c`
-- Release: `https://github.com/clever-max/nuedc_software/releases/tag/car-stable-v1.0.0`
-- Stable HEX SHA256: `2385D5A6D3A9B440F299C25CC6266AF414A56DDAA8148D5953E94654970B1526`
+- Status: `experimental-baseline`
+- Last handoff: `2026-10-07 15:00 +0800`
+- Main baseline source: `ec47eb4` (validated by the user)
+- Experiment branch: `codex/pid-tune-8494ded`
+- Stable tag: `car-stable-v1.0.0` → `8494ded`
+- Stable release: https://github.com/clever-max/nuedc_software/releases/tag/car-stable-v1.0.0
+- Validated ec47 release: https://github.com/clever-max/nuedc_software/releases/tag/car-ec47-v1.1.0
 
 ## Current objective
 
-Preserve the stable no-gyro 30-second NCHD12 gray-line firmware while keeping a reproducible path for later sensor and cornering work.
+保留 ec47 可行版本作为 main 的当前车载基线，同时保留 codex/pid-tune-8494ded 实验分支用于后续采样率、速度规划和控制算法研究。
 
 ## Current implementation
 
-当前 demo_mission.c 使用用户调参 WHEEL_PID_KP=1.20、LINE_PID_KP=5.0、LINE_PID_KD=0.05；使用 car/tools/build_validate_hex.ps1 独立生成 HEX
+main 已同步 ec47 的循迹关键代码和固件：基准速度 300 mm/s、轮速上限 320 mm/s、REFERENCE_TRACK_KP=150、REFERENCE_TRACK_KD=12、REFERENCE_TURN_SCALE=2.0、WHEEL_PID_KP=1.60、LINE_PID_KP=6.5、LINE_PID_KD=0.09。实验分支继续保留后续激进 PID 调参历史，不并入 main。
 
 ## Validation
 
-脚本实际成功：SysConfig、编译、链接、Intel HEX 和 alias 校验通过；car.hex SHA256=92F42FC1FD7A8283F18F92C16489E85468A0668A347FB1EF5EADBF67A7638160；未做实车验证
+已同步用户确认可行的 ec47 源码和两个 Intel HEX。当前 main 的源码、构建和物理行为应以烧录后串口与实车结果继续确认；尚未在本次同步后重新进行物理验证。
 
 ## Known issues
 
-- Do not claim gray-line tracking is physically validated until the telemetry reports `gray_bus=OK` and nonzero `gray=0x....` values.
-- The stable firmware is intentionally the 160 mm/s / ±200 mm/s version; experimental faster versions are not the stable reference.
+灰度刷新率和弯道减速/直道加速尚未实现。不要把实验分支的高速 PID 版本作为当前 main 的稳定固件。
 
 ## Next actions
 
-烧录 car/firmware/gray_line_30s_no_gyro.hex 后低速架空观察速度和 gray_bus，再进行实车调参
+先使用 main 中的 ec47 HEX 做架空和实车回归；后续在实验分支实现灰度采样与速度规划，再通过独立验证后选择性合并。
 
 ## Handoff log
 
-- `2026-10-07 10:21 +0800` — 用独立编译脚本验证用户 PID 修改并生成 HEX (commit `84fab1f`, branch `main`).
-
-- `2026-10-07` — Stable firmware/tag/release recorded; NACK1 remains the next hardware investigation.
+- `2026-10-07 15:00 +0800` — main 同步 ec47 关键源代码、轮速上限、两个 HEX 和状态记录；实验分支保留不变。
