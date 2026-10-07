@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 /* 所有任务的轮缘目标速度最终都不能超过此值。 */
-/* 实验分支：高于当前目标速度，避免 320 mm/s 限幅掩盖转向修正。 */
 #define WHEEL_SPEED_MAX_MM_S (500.0f)
 
 typedef struct {
