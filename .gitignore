@@ -63,3 +63,6 @@ docs/reference/LP-MSPM0G3507/text/
 
 # Temp Chatlog
 temp/
+
+# Nested Git worktree used for the experimental car branch; manage it from its own worktree.
+car_stable_8494ded/
