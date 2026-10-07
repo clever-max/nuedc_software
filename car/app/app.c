@@ -19,11 +19,59 @@ static volatile uint32_t s_control_ticks;
 static volatile uint8_t s_pending_ticks;
 static volatile uint8_t s_telemetry_divider;
 static volatile bool s_telemetry_due;
+static uint8_t s_button_demo_stage;
+static bool s_first_line_mission_active;
+static bool s_rectangle_mission_active;
+
+enum {
+    BUTTON_DEMO_LINE_PENDING = 0U,
+    BUTTON_DEMO_RECTANGLE_PENDING = 1U,
+    BUTTON_DEMO_COMPLETE = 2U
+};
 
 static bool startLineMission(void)
 {
     /* 当前验证版本完全不依赖陀螺仪，B21 直接启动灰度循迹。 */
-    return DemoMission_StartLineOnly(s_control_ticks);
+    bool started = DemoMission_StartLineOnly(s_control_ticks);
+    if (started && s_button_demo_stage == BUTTON_DEMO_LINE_PENDING)
+        s_first_line_mission_active = true;
+    return started;
+}
+
+static bool startRectangleMission(void)
+{
+    return DemoMission_StartRectangle(s_control_ticks);
+}
+
+static bool startButtonMission(void)
+{
+    if (s_button_demo_stage == BUTTON_DEMO_LINE_PENDING)
+        return startLineMission();
+    if (s_button_demo_stage == BUTTON_DEMO_RECTANGLE_PENDING) {
+        bool started = startRectangleMission();
+        if (started) s_rectangle_mission_active = true;
+        return started;
+    }
+    return false;
+}
+
+static void updateButtonDemoStage(void)
+{
+    /* Only a completed first run unlocks the second B21 press.  An aborted
+     * first run remains retryable and cannot accidentally skip to the turn run. */
+    if (s_first_line_mission_active &&
+        s_button_demo_stage == BUTTON_DEMO_LINE_PENDING &&
+        DemoMission_GetState() == DEMO_MISSION_DONE) {
+        s_button_demo_stage = BUTTON_DEMO_RECTANGLE_PENDING;
+        s_first_line_mission_active = false;
+        SerialConsole_WriteText("READY RECT30; B21 starts rectangle demo\r\n");
+    }
+    if (s_rectangle_mission_active &&
+        DemoMission_GetState() == DEMO_MISSION_DONE) {
+        s_button_demo_stage = BUTTON_DEMO_COMPLETE;
+        s_rectangle_mission_active = false;
+        SerialConsole_WriteText("RECT30 complete; B21 demo finished\r\n");
+    }
 }
 
 static uint8_t takePendingTicks(void)
@@ -54,13 +102,20 @@ static void processButton(void)
             if (DemoMission_IsRunning()) {
                 DemoMission_RequestStop();
                 BspBuzzer_Start(120U);
-            } else if (startLineMission()) {
-                BspBuzzer_Start(220U);
-                SerialConsole_WriteText("OK B21\r\n");
             } else {
-                /* 只有任务已在运行时才会拒绝重复启动。 */
-                BspMotor_Coast();
-                SerialConsole_WriteText("ERR B21 busy\r\n");
+                bool rectangle_start =
+                    s_button_demo_stage == BUTTON_DEMO_RECTANGLE_PENDING;
+                bool started = startButtonMission();
+                if (!started) {
+                    BspMotor_Coast();
+                    SerialConsole_WriteText("ERR B21 demo complete\r\n");
+                    return;
+                }
+                BspBuzzer_Start(220U);
+                if (rectangle_start)
+                    SerialConsole_WriteText("OK B21 RECT30\r\n");
+                else
+                    SerialConsole_WriteText("OK B21 LINE30\r\n");
             }
         }
     }
@@ -80,13 +135,23 @@ static void processSerialCommand(void)
             SerialConsole_WriteText("ERR busy\r\n");
         }
         break;
+    case SERIAL_COMMAND_RUNRECT:
+        if (startRectangleMission()) {
+            if (s_button_demo_stage == BUTTON_DEMO_RECTANGLE_PENDING)
+                s_rectangle_mission_active = true;
+            SerialConsole_WriteText("OK RUNRECT\r\n");
+            BspBuzzer_Start(220U);
+        } else {
+            SerialConsole_WriteText("ERR busy\r\n");
+        }
+        break;
     case SERIAL_COMMAND_STOP:
         DemoMission_RequestStop();
         BspBuzzer_Start(120U);
         SerialConsole_WriteText("OK STOP\r\n");
         break;
     case SERIAL_COMMAND_UNKNOWN:
-        SerialConsole_WriteText("Commands: RUNPID, RUN15, STOP\r\n");
+        SerialConsole_WriteText("Commands: RUNPID, RUN15, RUNRECT, STOP\r\n");
         break;
     case SERIAL_COMMAND_NONE:
     default:
@@ -104,7 +169,10 @@ void App_Init(void)
     /* 本验证版本不访问 MPU6050，避免未接传感器阻塞启动。 */
     DemoMission_Init(false);
     SerialConsole_Init();
-    SerialConsole_WriteText("MPU6050=DISABLED; B21 starts gray line 30s\r\n");
+    s_button_demo_stage = BUTTON_DEMO_LINE_PENDING;
+    s_first_line_mission_active = false;
+    s_rectangle_mission_active = false;
+    SerialConsole_WriteText("MPU6050=DISABLED; B21: LINE30 then RECT30\r\n");
 
     NVIC_ClearPendingIRQ(CONTROL_TICK_INST_INT_IRQN);
     NVIC_EnableIRQ(CONTROL_TICK_INST_INT_IRQN);
@@ -120,6 +188,7 @@ void App_RunOnce(void)
 {
     uint8_t elapsed_ticks;
     /* 前台循环保持非阻塞：先处理命令，再消费定时器积累的控制 tick。 */
+    updateButtonDemoStage();
     processSerialCommand();
     processButton();
     elapsed_ticks = takePendingTicks();

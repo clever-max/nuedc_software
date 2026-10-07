@@ -22,6 +22,7 @@
 #define CURVE_ENTRY_CONFIRM_MS        (150U)
 #define STRAIGHT_MIN_MS               (1000U)
 #define LINE_ONLY_DURATION_MS         (30000U)
+#define RECTANGLE_DURATION_MS         (30000U)
 #define REFERENCE_BASE_SPEED_MM_S     (300.0f)
 #define REFERENCE_SPEED_RAMP_MM_S2    (700.0f)
 #define REFERENCE_WHEEL_BASE_MM       (45.0f)
@@ -40,6 +41,23 @@
 #define LINE_PID_KD                   (0.09f)
 #define LINE_CORRECTION_LIMIT_MM_S    (90.0f)
 #define LINE_INTEGRAL_LIMIT           (20.0f)
+
+/*
+ * XingShuyu/Car uses eight digital gray channels for special-road handling.
+ * NCHD12 is reduced to eight virtual channels in gray8From12(): the outer
+ * channels stay single-channel and the six inner positions use small OR
+ * groups so a one-channel difference does not hide a right-angle feature.
+ */
+#define LINE_FEATURE_CONFIRM_TICKS    (3U)
+#define LINE_REACQUIRE_CONFIRM_TICKS  (3U)
+#define LINE_TURN_MIN_MS              (120U)
+#define LINE_TURN_TIMEOUT_MS          (1800U)
+#define LINE_TURN_SPEED_MM_S          (120.0f)
+#define LINE_LOST_SPEED_MM_S          (70.0f)
+#define GRAY8_RIGHT_OUTER_MASK        (0x07U)
+#define GRAY8_CENTER_MASK             (0x18U)
+#define GRAY8_LEFT_OUTER_MASK         (0xE0U)
+#define GRAY8_FAR_OUTER_MASK          (0x81U)
 
 static DemoMissionState s_state = DEMO_MISSION_IDLE;
 static DualWheelSpeedController s_wheel_controller;
@@ -61,12 +79,116 @@ static uint16_t s_gray_bits;
 static bool s_gray_bus_ok;
 static uint8_t s_gray_bus_stage;
 static uint8_t s_gray_write_address;
+static DemoLineMode s_line_mode;
+static DemoLineMode s_line_candidate;
+static uint8_t s_line_candidate_count;
+static uint8_t s_line_reacquire_count;
+static uint32_t s_line_mode_start_tick;
 static float s_previous_line_error;
 static float s_reference_integral;
 static int8_t s_reference_error_last;
 static float s_reference_base_speed;
 static int32_t s_speed_a_mm_s;
 static int32_t s_speed_b_mm_s;
+
+static uint8_t gray8From12(uint16_t bits)
+{
+    uint8_t gray8 = 0U;
+
+    /* bit0 is the rightmost NCHD12 channel and bit11 the leftmost. */
+    if ((bits & (1U << 0)) != 0U) gray8 |= (1U << 0);
+    if ((bits & ((1U << 1) | (1U << 2))) != 0U) gray8 |= (1U << 1);
+    if ((bits & (1U << 3)) != 0U) gray8 |= (1U << 2);
+    if ((bits & ((1U << 4) | (1U << 5))) != 0U) gray8 |= (1U << 3);
+    if ((bits & ((1U << 6) | (1U << 7))) != 0U) gray8 |= (1U << 4);
+    if ((bits & (1U << 8)) != 0U) gray8 |= (1U << 5);
+    if ((bits & ((1U << 9) | (1U << 10))) != 0U) gray8 |= (1U << 6);
+    if ((bits & (1U << 11)) != 0U) gray8 |= (1U << 7);
+    return gray8;
+}
+
+static DemoLineMode classifyLineFeature(uint16_t bits, float position,
+    bool valid)
+{
+    uint8_t gray8 = gray8From12(bits);
+    uint8_t active = 0U;
+
+    if (!valid || bits == 0U) return DEMO_LINE_LOST;
+    for (uint8_t index = 0U; index < 8U; ++index) {
+        if ((gray8 & (uint8_t)(1U << index)) != 0U) ++active;
+    }
+
+    /* XingShuyu/Car's right/left patterns, mirrored onto the 8 virtual bins. */
+    if ((gray8 & GRAY8_RIGHT_OUTER_MASK) == GRAY8_RIGHT_OUTER_MASK &&
+        (gray8 & (1U << 7)) == 0U) {
+        return DEMO_LINE_TURN_RIGHT;
+    }
+    if ((gray8 & GRAY8_LEFT_OUTER_MASK) == GRAY8_LEFT_OUTER_MASK &&
+        (gray8 & (1U << 0)) == 0U) {
+        return DEMO_LINE_TURN_LEFT;
+    }
+
+    /* A narrower corner can miss one grouped channel; use position only as a
+     * fallback when the corresponding outer side and center are both seen. */
+    if (position <= -8.0f && active >= 2U &&
+        (gray8 & GRAY8_RIGHT_OUTER_MASK) != 0U &&
+        (gray8 & GRAY8_CENTER_MASK) != 0U) {
+        return DEMO_LINE_TURN_RIGHT;
+    }
+    if (position >= 8.0f && active >= 2U &&
+        (gray8 & GRAY8_LEFT_OUTER_MASK) != 0U &&
+        (gray8 & GRAY8_CENTER_MASK) != 0U) {
+        return DEMO_LINE_TURN_LEFT;
+    }
+    return DEMO_LINE_TRACK;
+}
+
+static bool centerLineReacquired(uint16_t bits, bool valid)
+{
+    uint8_t gray8 = gray8From12(bits);
+    return valid && (gray8 & GRAY8_CENTER_MASK) != 0U &&
+        (gray8 & GRAY8_FAR_OUTER_MASK) == 0U;
+}
+
+static void setLineMode(DemoLineMode mode, uint32_t now_tick)
+{
+    s_line_mode = mode;
+    s_line_mode_start_tick = now_tick;
+    s_line_candidate = DEMO_LINE_TRACK;
+    s_line_candidate_count = 0U;
+    s_line_reacquire_count = 0U;
+    s_previous_line_error = s_line_error;
+    s_reference_integral = 0.0f;
+    s_reference_error_last = 0;
+    s_reference_base_speed = 0.0f;
+    WheelSpeedController_Reset(&s_wheel_controller);
+}
+
+static bool confirmLineFeature(DemoLineMode candidate)
+{
+    if (candidate == s_line_candidate) {
+        if (s_line_candidate_count < UINT8_MAX) ++s_line_candidate_count;
+    } else {
+        s_line_candidate = candidate;
+        s_line_candidate_count = 1U;
+    }
+    return s_line_candidate_count >= LINE_FEATURE_CONFIRM_TICKS;
+}
+
+static float turnSpeedScale(uint8_t gray8, bool left)
+{
+    /* Slow down in three steps as the new center line comes under the array. */
+    if (left) {
+        if ((gray8 & (1U << 3)) != 0U) return 0.25f;
+        if ((gray8 & (1U << 2)) != 0U) return 0.45f;
+        if ((gray8 & (1U << 1)) != 0U) return 0.70f;
+    } else {
+        if ((gray8 & (1U << 4)) != 0U) return 0.25f;
+        if ((gray8 & (1U << 5)) != 0U) return 0.45f;
+        if ((gray8 & (1U << 6)) != 0U) return 0.70f;
+    }
+    return 1.0f;
+}
 
 static uint32_t elapsedStageMs(uint32_t now_tick)
 {
@@ -91,6 +213,9 @@ static void enterState(DemoMissionState state, uint32_t now_tick,
         s_target_yaw_deg = yaw_deg;
     } else if (state == DEMO_MISSION_LINE_ONLY) {
         s_target_yaw_deg = yaw_deg;
+    } else if (state == DEMO_MISSION_RECTANGLE) {
+        s_target_yaw_deg = yaw_deg;
+        setLineMode(DEMO_LINE_TRACK, now_tick);
     } else {
         s_target_yaw_deg = yaw_deg;
         BspMotor_Coast();
@@ -189,6 +314,48 @@ static void updateWheelOutput(float dt_s, float base_speed_mm_s,
     BspMotor_SetCommand(command_a, command_b);
 }
 
+static void updateTurnOutput(float dt_s, bool left, uint8_t gray8)
+{
+    int16_t command_a;
+    int16_t command_b;
+    float turn_speed = LINE_TURN_SPEED_MM_S * turnSpeedScale(gray8, left);
+    float target_a = left ? -turn_speed : turn_speed;
+    float target_b = left ? turn_speed : -turn_speed;
+
+    /* Keep the reference behavior: opposite wheel targets rotate in place,
+     * while the encoder loop supplies the PWM and preserves motor polarity. */
+    WheelSpeedController_SetTargets(&s_wheel_controller, target_a, target_b);
+    WheelSpeedController_Update(&s_wheel_controller,
+        (float)s_speed_a_mm_s, (float)s_speed_b_mm_s, dt_s,
+        &command_a, &command_b);
+    BspMotor_SetCommand(command_a, command_b);
+}
+
+static void updateLostOutput(float dt_s)
+{
+    int16_t command_a;
+    int16_t command_b;
+    float target_a;
+    float target_b;
+
+    /* Search toward the last observed line side instead of driving blind. */
+    if (s_line_error > 0.5f) {
+        target_a = -LINE_LOST_SPEED_MM_S;
+        target_b = LINE_LOST_SPEED_MM_S;
+    } else if (s_line_error < -0.5f) {
+        target_a = LINE_LOST_SPEED_MM_S;
+        target_b = -LINE_LOST_SPEED_MM_S;
+    } else {
+        target_a = 0.0f;
+        target_b = 0.0f;
+    }
+    WheelSpeedController_SetTargets(&s_wheel_controller, target_a, target_b);
+    WheelSpeedController_Update(&s_wheel_controller,
+        (float)s_speed_a_mm_s, (float)s_speed_b_mm_s, dt_s,
+        &command_a, &command_b);
+    BspMotor_SetCommand(command_a, command_b);
+}
+
 static void resetMissionVariables(void)
 {
     s_curve_start_yaw = 0.0f;
@@ -205,6 +372,11 @@ static void resetMissionVariables(void)
     s_gray_bus_ok = false;
     s_gray_bus_stage = 0U;
     s_gray_write_address = 0x40U;
+    s_line_mode = DEMO_LINE_TRACK;
+    s_line_candidate = DEMO_LINE_TRACK;
+    s_line_candidate_count = 0U;
+    s_line_reacquire_count = 0U;
+    s_line_mode_start_tick = 0U;
     s_previous_line_error = 0.0f;
     s_reference_integral = 0.0f;
     s_reference_error_last = 0;
@@ -239,6 +411,11 @@ bool DemoMission_IsRunning(void)
         s_state != DEMO_MISSION_DONE && s_state != DEMO_MISSION_ABORTED;
 }
 
+DemoMissionState DemoMission_GetState(void)
+{
+    return s_state;
+}
+
 bool DemoMission_Start(uint32_t now_tick, float yaw_deg)
 {
     if (!DemoMission_CanStart() || !s_gyro_ready) return false;
@@ -262,6 +439,20 @@ bool DemoMission_StartLineOnly(uint32_t now_tick)
     s_gyro_required = false;
     s_gyro_ready = false;
     enterState(DEMO_MISSION_LINE_ONLY, now_tick, 0.0f);
+    BspMotor_Coast();
+    return true;
+}
+
+bool DemoMission_StartRectangle(uint32_t now_tick)
+{
+    if (!DemoMission_CanStart()) return false;
+    BspEncoder_Reset();
+    resetMissionVariables();
+    s_mission_start_tick = now_tick;
+    s_stage_start_tick = now_tick;
+    s_gyro_required = false;
+    s_gyro_ready = false;
+    enterState(DEMO_MISSION_RECTANGLE, now_tick, 0.0f);
     BspMotor_Coast();
     return true;
 }
@@ -367,6 +558,62 @@ void DemoMission_Update(uint32_t now_tick, float dt_s,
         return;
     }
 
+    if (s_state == DEMO_MISSION_RECTANGLE) {
+        DemoLineMode feature = classifyLineFeature(gray_bits, line_error,
+            line_valid);
+        uint8_t gray8 = gray8From12(gray_bits);
+        uint32_t line_elapsed = (now_tick - s_line_mode_start_tick) *
+            CONTROL_PERIOD_MS;
+
+        if (s_line_mode == DEMO_LINE_TRACK) {
+            if (feature == DEMO_LINE_TURN_LEFT ||
+                feature == DEMO_LINE_TURN_RIGHT) {
+                if (confirmLineFeature(feature)) {
+                    setLineMode(feature, now_tick);
+                } else {
+                    updateReferenceLineOutput(dt_s, line_error, line_valid);
+                }
+            } else if (feature == DEMO_LINE_LOST) {
+                setLineMode(DEMO_LINE_LOST, now_tick);
+                updateLostOutput(dt_s);
+            } else {
+                s_line_candidate = DEMO_LINE_TRACK;
+                s_line_candidate_count = 0U;
+                updateReferenceLineOutput(dt_s, line_error, line_valid);
+            }
+        } else if (s_line_mode == DEMO_LINE_TURN_LEFT ||
+            s_line_mode == DEMO_LINE_TURN_RIGHT) {
+            updateTurnOutput(dt_s, s_line_mode == DEMO_LINE_TURN_LEFT,
+                gray8);
+            if (line_elapsed >= LINE_TURN_MIN_MS &&
+                feature == DEMO_LINE_TRACK &&
+                centerLineReacquired(gray_bits, line_valid)) {
+                if (s_line_reacquire_count < UINT8_MAX)
+                    ++s_line_reacquire_count;
+                if (s_line_reacquire_count >= LINE_REACQUIRE_CONFIRM_TICKS)
+                    setLineMode(DEMO_LINE_TRACK, now_tick);
+            } else {
+                s_line_reacquire_count = 0U;
+            }
+            if (s_line_mode != DEMO_LINE_TRACK &&
+                line_elapsed >= LINE_TURN_TIMEOUT_MS)
+                setLineMode(DEMO_LINE_LOST, now_tick);
+        } else if (s_line_mode == DEMO_LINE_LOST) {
+            updateLostOutput(dt_s);
+            if (feature == DEMO_LINE_TRACK &&
+                confirmLineFeature(DEMO_LINE_TRACK)) {
+                setLineMode(DEMO_LINE_TRACK, now_tick);
+            }
+        }
+
+        if (elapsed_ms >= RECTANGLE_DURATION_MS) {
+            s_state = DEMO_MISSION_DONE;
+            WheelSpeedController_Reset(&s_wheel_controller);
+            BspMotor_Coast();
+        }
+        return;
+    }
+
     BspMotor_Coast();
 }
 
@@ -385,7 +632,9 @@ void DemoMission_GetSnapshot(uint32_t now_tick, float yaw_deg,
     snapshot->gyro_backend = BspMpu6050_GetBackendName();
     snapshot->line_error = s_line_error;
     snapshot->line_valid = s_line_valid;
+    snapshot->line_mode = s_line_mode;
     snapshot->gray_bits = s_gray_bits;
+    snapshot->gray8_bits = gray8From12(s_gray_bits);
     snapshot->gray_bus_ok = s_gray_bus_ok;
     snapshot->gray_bus_stage = s_gray_bus_stage;
     snapshot->gray_write_address = s_gray_write_address;

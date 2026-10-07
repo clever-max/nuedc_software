@@ -10,9 +10,17 @@ typedef enum {
     DEMO_MISSION_STRAIGHT_TRACK,
     DEMO_MISSION_CURVE_2,
     DEMO_MISSION_LINE_ONLY,
+    DEMO_MISSION_RECTANGLE,
     DEMO_MISSION_DONE,
     DEMO_MISSION_ABORTED
 } DemoMissionState;
+
+typedef enum {
+    DEMO_LINE_TRACK = 0,
+    DEMO_LINE_TURN_LEFT,
+    DEMO_LINE_TURN_RIGHT,
+    DEMO_LINE_LOST
+} DemoLineMode;
 
 typedef struct {
     DemoMissionState state;
@@ -26,7 +34,9 @@ typedef struct {
     const char *gyro_backend;
     float line_error;
     bool line_valid;
+    DemoLineMode line_mode;
     uint16_t gray_bits;
+    uint8_t gray8_bits;
     bool gray_bus_ok;
     uint8_t gray_bus_stage;
     uint8_t gray_write_address;
@@ -39,8 +49,10 @@ typedef struct {
 void DemoMission_Init(bool gyro_ready);
 bool DemoMission_CanStart(void);
 bool DemoMission_IsRunning(void);
+DemoMissionState DemoMission_GetState(void);
 bool DemoMission_Start(uint32_t now_tick, float yaw_deg);
 bool DemoMission_StartLineOnly(uint32_t now_tick);
+bool DemoMission_StartRectangle(uint32_t now_tick);
 void DemoMission_RequestStop(void);
 void DemoMission_Update(uint32_t now_tick, float dt_s,
     int32_t speed_a_mm_s, int32_t speed_b_mm_s,

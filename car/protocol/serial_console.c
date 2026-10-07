@@ -66,8 +66,20 @@ static const char *stateName(DemoMissionState state)
     case DEMO_MISSION_CURVE_2: return "CURVE";
     case DEMO_MISSION_STRAIGHT_TRACK: return "STRAIGHT";
     case DEMO_MISSION_LINE_ONLY: return "LINE30";
+    case DEMO_MISSION_RECTANGLE: return "RECT30";
     case DEMO_MISSION_DONE: return "DONE";
     case DEMO_MISSION_ABORTED: return "ABORT";
+    default: return "?";
+    }
+}
+
+static const char *lineModeName(DemoLineMode mode)
+{
+    switch (mode) {
+    case DEMO_LINE_TRACK: return "TRACK";
+    case DEMO_LINE_TURN_LEFT: return "TURNL";
+    case DEMO_LINE_TURN_RIGHT: return "TURNR";
+    case DEMO_LINE_LOST: return "LOST";
     default: return "?";
     }
 }
@@ -77,7 +89,7 @@ void SerialConsole_Init(void)
     s_rx_length = 0U;
     s_command_ready = false;
     SerialConsole_WriteText("NCHD12 gray line demo onboard UART0 115200 8N1\r\n");
-    SerialConsole_WriteText("B21/RUNPID/RUN15: gray line 30s; STOP aborts\r\n");
+    SerialConsole_WriteText("B21: LINE30 then RECT30; RUNPID/RUNRECT; STOP aborts\r\n");
     SerialConsole_WriteText("MPU6050 disabled; encoder speed PID active\r\n");
 }
 
@@ -106,6 +118,7 @@ SerialCommand SerialConsole_PollCommand(void)
     if (primask == 0U) __enable_irq();
     if (length == 5U && command[0]=='R' && command[1]=='U' && command[2]=='N' && command[3]=='1' && command[4]=='5') return SERIAL_COMMAND_RUN15;
     if (length == 6U && command[0]=='R' && command[1]=='U' && command[2]=='N' && command[3]=='P' && command[4]=='I' && command[5]=='D') return SERIAL_COMMAND_RUNPID;
+    if (length == 7U && command[0]=='R' && command[1]=='U' && command[2]=='N' && command[3]=='R' && command[4]=='E' && command[5]=='C' && command[6]=='T') return SERIAL_COMMAND_RUNRECT;
     if (length == 4U && command[0]=='S' && command[1]=='T' && command[2]=='O' && command[3]=='P') return SERIAL_COMMAND_STOP;
     return SERIAL_COMMAND_UNKNOWN;
 }
@@ -122,7 +135,9 @@ void SerialConsole_PrintTelemetry(const DemoMissionSnapshot *snapshot)
     SerialConsole_WriteText(" backend="); SerialConsole_WriteText(snapshot->gyro_backend);
     SerialConsole_WriteText(" line="); putFixed1(snapshot->line_error);
     SerialConsole_WriteText(snapshot->line_valid ? "(OK)" : "(LOST)");
+    SerialConsole_WriteText(" line_mode="); SerialConsole_WriteText(lineModeName(snapshot->line_mode));
     SerialConsole_WriteText(" gray=0x"); putHex16(snapshot->gray_bits);
+    SerialConsole_WriteText(" gray8=0x"); putHex8(snapshot->gray8_bits);
     SerialConsole_WriteText(" gray_bus=");
     if (snapshot->gray_bus_ok) SerialConsole_WriteText("OK");
     else {
