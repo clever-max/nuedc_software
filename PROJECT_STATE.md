@@ -6,9 +6,9 @@ status before changing files.
 
 - Project: `car_stable_8494ded`
 - Status: `experimental`
-- Last handoff: `2026-10-07 11:29 +0800`
-- Last recorded branch: `main`
-- Last recorded commit: `f89dcc3`
+- Last handoff: `2026-10-07 11:35 +0800`
+- Last recorded branch: `codex/pid-tune-8494ded`
+- Last recorded commit: `8b5d3eb`
 
 ## Current objective
 
@@ -31,6 +31,8 @@ check_syscfg.py 静态检查通过（提示 SysConfig 生成文件缺失，因�
 先在架空状态下烧录 car/firmware/gray_line_30s_no_gyro.hex，检查左右速度与 gray_bus；再在同一赛道及遮光条件下实测循迹和遥测。
 
 ## Handoff log
+
+- `2026-10-07 11:35 +0800` — 从 `8494ded` 独立分支调高 WHEEL/LINE PID，保留修正限幅和积分限幅；SysConfig、编译、链接和 HEX 校验通过，等待实车验证。 (commit `8b5d3eb`, branch `codex/pid-tune-8494ded`).
 
 - `2026-10-07 11:29 +0800` — 基于 8494ded 建立独立副本并增大 PID 参数；HEX 已生成校验，等待实车验证。 (commit `f89dcc3`, branch `main`).
 
