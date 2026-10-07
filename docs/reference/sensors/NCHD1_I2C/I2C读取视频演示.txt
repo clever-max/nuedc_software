@@ -1,0 +1,3 @@
+https://www.bilibili.com/video/BV1Ym1oYTECN
+
+12路灰度传感器升级部分功能说明 | 不带MCU实现I2C串行数据输出 | 德州仪器TI数字逻辑芯片 | 输出电压可选择 | FPC排线输出 | 通讯地址可设置
