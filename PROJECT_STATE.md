@@ -2,14 +2,14 @@
 
 - Project: `car_stable_8494ded`
 - Status: `experiment`
-- Last handoff: `2026-10-07 16:40 +0800`
+- Last handoff: `2026-10-07 16:55 +0800`
 - Baseline: `ec47eb45ff920c17ffb63ff5ab716e1d616d70e8`
 - Branch: `codex/pid-tune-8494ded`
 - Main branch remains on the validated ec47 baseline with the original 320 mm/s wheel target limit.
 
 ## Current objective
 
-Test 420 mm/s base speed with modest P and stronger D increases, plus a proportionally raised acceleration ramp.
+Preserve the user-tested 420 mm/s firmware as Release `car-ec47-v1.2.0`; retain the experiment branch for further tuning.
 
 ## Current implementation
 
@@ -17,7 +17,7 @@ Test 420 mm/s base speed with modest P and stronger D increases, plus a proporti
 
 ## Validation
 
-SysConfig static check passed. SysConfig generated successfully with the existing PWM STOP/STANDBY register retention information notice. TI Arm Clang compilation, linking, Intel HEX generation, and HEX validation passed. `car.hex` and `car/firmware/gray_line_30s_no_gyro.hex` SHA256: `D6332CEFECB7B90E7195C03D552DD6CC00AA3B205E37B145E64079CA0F72F6D6`. No flash or physical-board test has been performed in this handoff.
+SysConfig static check passed. SysConfig generated successfully with the existing PWM STOP/STANDBY register retention information notice. TI Arm Clang compilation, linking, Intel HEX generation, and HEX validation passed. The user reports successful vehicle testing. GitHub Release `Car Stable_SpeedUP v1.2.0` is published from commit `d2094da` with both HEX files; downloaded release assets were SHA256 verified as `D6332CEFECB7B90E7195C03D552DD6CC00AA3B205E37B145E64079CA0F72F6D6`.
 
 ## Known issues
 
@@ -29,4 +29,5 @@ Flash this experimental HEX with wheels raised first; then compare against ec47 
 
 ## Handoff log
 
+- `2026-10-07 16:55 +0800` — Published `car-ec47-v1.2.0`, matching the previous `Car Stable_SpeedUP` release title convention; uploaded HEX assets and verified downloaded hashes. User confirmed vehicle test success.
 - `2026-10-07 16:40 +0800` — Raised base speed to 420 mm/s, ramp to 840 mm/s², wheel target ceiling to 600 mm/s, modestly raised P, and more strongly raised steering D; build and HEX checks passed. Physical test pending.
