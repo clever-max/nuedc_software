@@ -4,12 +4,13 @@
 
 ## 先读这些
 
-1. [接线与配置对应表](analysis/wiring.md)
-2. [当前运行架构](analysis/architecture.md)
-3. [灰度循迹控制说明](analysis/grayscale_line_following.md)
-4. [串口调试指南](analysis/serial_debug.md)
-5. [MG513X 霍尔编码器说明](analysis/MG513X_Hall_notes.md)
-6. [AT8236 资料核对](analysis/AT8236_reference_notes.md)
+1. [项目完整解析与独立复现指南](car_project_detailed_guide.md)：面向零基础读者，从电路概念、数据手册、架构、算法到构建和实车排查。
+2. [接线与配置对应表](analysis/wiring.md)
+3. [当前运行架构](analysis/architecture.md)
+4. [灰度循迹控制说明](analysis/grayscale_line_following.md)
+5. [串口调试指南](analysis/serial_debug.md)
+6. [MG513X 霍尔编码器说明](analysis/MG513X_Hall_notes.md)
+7. [AT8236 资料核对](analysis/AT8236_reference_notes.md)
 
 ## 历史和保留驱动
 
